@@ -1,0 +1,28 @@
+{
+    "name": "fei/connect-client",
+    "description": "Flash Connect Client - Service Provider",
+    "type": "project",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Vincent Simonin",
+            "email": "vsi@opcoding.eu"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Fei\\Service\\Connect\\Client\\": "src"
+        }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://composer.flash-global.net"
+        }
+    ],
+    "require": {
+        "lightsaml/lightsaml": "^1.0",
+        "nikic/fast-route": "^1.0",
+        "zendframework/zend-diactoros": "^1.3"
+    }
+}
