@@ -5,8 +5,10 @@ namespace Fei\Service\Connect\Client;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use Fei\Service\Connect\Client\Exception\SamlException;
+use Fei\Service\Connect\Common\Entity\User;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
+use Zend\Diactoros\Response\RedirectResponse;
 
 /**
  * Class Connect
@@ -15,6 +17,9 @@ use Zend\Diactoros\Response;
  */
 class Connect
 {
+    /**
+     * @var User
+     */
     protected $user;
 
     /**
@@ -33,41 +38,73 @@ class Connect
     protected $response;
 
     /**
+     * @var string
+     */
+    protected $defaultTargetPath;
+
+    /**
+     * @var string
+     */
+    protected $role;
+
+    /**
      * Connect constructor.
      *
-     * @param Saml $saml
+     * @param Saml   $saml
+     * @param string $defaultTargetPath
      */
-    public function __construct(Saml $saml)
+    public function __construct(Saml $saml, $defaultTargetPath = '/')
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
         }
 
+        if (isset($_SESSION['user'])) {
+            $this->setUser(new User($_SESSION['user']));
+        }
+
         $this->setSaml($saml);
+        $this->setDefaultTargetPath($defaultTargetPath);
         $this->initDispatcher();
     }
 
     /**
+     * Tells if user is authenticated
+     *
      * @return bool
      */
     public function isAuthenticated()
     {
-        return false;
+        return !empty($this->getUser());
     }
 
+    /**
+     * Get User
+     *
+     * @return User
+     */
     public function getUser()
     {
         return $this->user;
     }
 
     /**
-     * @param $user
+     * Set User
+     *
+     * @param User $user
      *
      * @return $this
      */
     public function setUser($user)
     {
         $this->user = $user;
+
+        unset($_SESSION['user']);
+
+        if ($this->user instanceof User) {
+            $_SESSION['user'] = $this->user->toArray();
+            $this->setRole($this->user->getCurrentRole());
+        }
 
         return $this;
     }
@@ -97,7 +134,33 @@ class Connect
     }
 
     /**
-     * @return \FastRoute\Dispatcher
+     * Get Response
+     *
+     * @return ResponseInterface
+     */
+    public function getResponse()
+    {
+        return $this->response;
+    }
+
+    /**
+     * Set Response
+     *
+     * @param ResponseInterface $response
+     *
+     * @return $this
+     */
+    public function setResponse($response)
+    {
+        $this->response = $response;
+
+        return $this;
+    }
+
+    /**
+     * Get Dispatcher
+     *
+     * @return Dispatcher
      */
     public function getDispatcher()
     {
@@ -105,45 +168,135 @@ class Connect
     }
 
     /**
-     * @param \FastRoute\Dispatcher $dispatcher
+     * Set Dispatcher
+     *
+     * @param Dispatcher $dispatcher
      *
      * @return $this
      */
-    public function setDispatcher(Dispatcher $dispatcher)
+    public function setDispatcher($dispatcher)
     {
         $this->dispatcher = $dispatcher;
 
         return $this;
     }
 
+    /**
+     * Get RequestedUri
+     *
+     * @return string
+     */
+    public function getDefaultTargetPath()
+    {
+        return $this->defaultTargetPath;
+    }
+
+    /**
+     * Set RequestedUri
+     *
+     * @param string $defaultTargetPath
+     *
+     * @return $this
+     */
+    public function setDefaultTargetPath($defaultTargetPath)
+    {
+        $this->defaultTargetPath = $defaultTargetPath;
+
+        return $this;
+    }
+
+    /**
+     * Get Role
+     *
+     * @return string
+     */
+    public function getRole()
+    {
+        return $this->role;
+    }
+
+    /**
+     * Set Role
+     *
+     * @param string $role
+     *
+     * @return $this
+     */
+    public function setRole($role)
+    {
+        $this->role = $role;
+
+        return $this;
+    }
+
+    /**
+     * Handle connect request
+     *
+     * @param string $requestUri
+     * @param string $requestMethod
+     *
+     * @return $this
+     */
     public function handleRequest($requestUri = null, $requestMethod = null)
     {
-        $info = $this->getDispatcher()->dispatch($requestMethod, $requestUri);
+        $pathInfo = $requestUri;
+
+        if (false !== $pos = strpos($pathInfo, '?')) {
+            $pathInfo = substr($pathInfo, 0, $pos);
+        }
+
+        $pathInfo = rawurldecode($pathInfo);
+
+        $info = $this->getDispatcher()->dispatch($requestMethod, $pathInfo);
         if ($info[0] == Dispatcher::FOUND) {
             try {
                 $this->setUser($info[1]());
+
+                $targetedPath = isset($_SESSION['targeted_path'])
+                    ? $_SESSION['targeted_path']
+                    : $this->getDefaultTargetPath();
+
+                unset($_SESSION['targeted_path']);
+                unset($_SESSION['SAML_RelayState']);
+
+                // Redirect to target
+                $this->setResponse(new RedirectResponse($targetedPath));
             } catch (SamlException $e) {
-                $this->response = $e->getResponse();
+                $this->setResponse($e->getResponse());
             }
         } elseif (!$this->isAuthenticated()) {
-            $this->response = $this->getSaml()->getHttpRedirectBindingResponse();
+            $request = $this->getSaml()->buildAuthnRequest();
+
+            if (strtoupper($requestMethod) !== 'GET') {
+                $_SESSION['targeted_path'] = $requestUri;
+            }
+
+            $_SESSION['SAML_RelayState'] = $request->getRelayState();
+
+            $this->setResponse($this->getSaml()->getHttpRedirectBindingResponse($request));
         }
 
         return $this;
     }
 
+    /**
+     * Emit the client response if exists and die...
+     */
     public function emit()
     {
         if (headers_sent($file, $line)) {
             throw new \LogicException('Headers already sent in %s on line %d', $file, $line);
         }
 
-        if ($this->response) {
-            (new Response\SapiEmitter())->emit($this->response);
+        if ($this->getResponse()) {
+            (new Response\SapiEmitter())->emit($this->getResponse());
             exit();
         }
     }
 
+    /**
+     * Init the route for ACS dispatcher
+     */
     protected function initDispatcher()
     {
         $this->setDispatcher(

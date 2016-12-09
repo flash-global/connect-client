@@ -8,8 +8,31 @@ use LightSaml\Model\Protocol\StatusCode;
 use Zend\Diactoros\Response;
 use LightSaml\Model\Protocol\Response as SamlResponse;
 
+/**
+ * Class SamlException
+ *
+ * @package Fei\Service\Connect\Client\Exception
+ */
 class SamlException extends \Exception
 {
+    /**
+     * @var string
+     */
+    protected $status;
+
+    /**
+     * SamlException constructor.
+     *
+     * @param string     $status
+     * @param \Exception $previous
+     */
+    public function __construct($status = '', \Exception $previous = null)
+    {
+        $this->status = $status;
+
+        parent::__construct('', 0, $previous);
+    }
+
     /**
      * Get exception response to emit
      *
@@ -31,7 +54,7 @@ class SamlException extends \Exception
     protected function getContent()
     {
         $response = new SamlResponse();
-        $response->setStatus(new Status(new StatusCode('urn:oasis:names:tc:SAML:2.0:status:RequestDenied')));
+        $response->setStatus(new Status(new StatusCode($this->status)));
 
         $context = new SerializationContext();
         $response->serialize($context->getDocument(), $context);
