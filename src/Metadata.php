@@ -128,4 +128,18 @@ class Metadata
 
         return $this->getServiceProvider()->getFirstAssertionConsumerService();
     }
+
+    /**
+     * Returns the first logout Service
+     *
+     * @return \LightSaml\Model\Metadata\SingleLogoutService
+     */
+    public function getFirstLogout()
+    {
+        if (!$this->getServiceProvider()->getFirstSingleLogoutService()) {
+            throw new \LogicException('The Service Provider must have one Logout service registered');
+        }
+
+        return $this->getServiceProvider()->getFirstSingleLogoutService();
+    }
 }

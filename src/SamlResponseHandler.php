@@ -2,16 +2,7 @@
 
 namespace Fei\Service\Connect\Client;
 
-use Fei\Service\Connect\Common\Entity\User;
-use LightSaml\Binding\BindingFactory;
-use LightSaml\ClaimTypes;
-use LightSaml\Context\Profile\MessageContext;
-use LightSaml\Credential\KeyHelper;
-use LightSaml\Model\Assertion\Attribute;
-use LightSaml\Model\Assertion\AttributeStatement;
-use LightSaml\Model\Context\DeserializationContext;
-use LightSaml\Model\Metadata\KeyDescriptor;
-use Symfony\Component\HttpFoundation\Request;
+use Zend\Diactoros\Response\RedirectResponse;
 
 /**
  * Class SamlResponseHandler
@@ -21,49 +12,32 @@ use Symfony\Component\HttpFoundation\Request;
 class SamlResponseHandler
 {
     /**
-     * @var Saml
-     */
-    protected $saml;
-
-    /**
-     * SamlResponseHandler constructor.
+     * Handle Saml Response
      *
-     * @param Saml $saml
-     */
-    public function __construct(Saml $saml)
-    {
-        $this->setSaml($saml);
-    }
-
-    /**
-     * @return Saml
-     */
-    public function getSaml()
-    {
-        return $this->saml;
-    }
-
-    /**
-     * @param Saml $saml
+     * @param Connect $connect
      *
-     * @return $this
+     * @return RedirectResponse
      */
-    public function setSaml(Saml $saml)
+    public function __invoke(Connect $connect)
     {
-        $this->saml = $saml;
+        $response = $connect->getSaml()->receiveSamlResponse();
 
-        return $this;
-    }
-
-    public function __invoke()
-    {
-        $response = $this->getSaml()->receiveSamlResponse();
-
-        $this->getSaml()->validateResponse(
+        $connect->getSaml()->validateResponse(
             $response,
             isset($_SESSION['SAML_RelayState']) ? $_SESSION['SAML_RelayState'] : null
         );
 
-        return $this->getSaml()->retrieveUserFromAssertion($response->getFirstAssertion());
+        $connect->setUser(
+            $connect->getSaml()->retrieveUserFromAssertion($response->getFirstAssertion())
+        );
+
+        $targetedPath = isset($_SESSION['targeted_path'])
+            ? $_SESSION['targeted_path']
+            : $connect->getConfig()->getDefaultTargetPath();
+
+        unset($_SESSION['targeted_path']);
+        unset($_SESSION['SAML_RelayState']);
+
+        return new RedirectResponse($targetedPath);
     }
 }

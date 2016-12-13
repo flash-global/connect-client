@@ -8,7 +8,6 @@ use Fei\Service\Connect\Client\Exception\SamlException;
 use Fei\Service\Connect\Common\Entity\User;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
-use Zend\Diactoros\Response\RedirectResponse;
 
 /**
  * Class Connect
@@ -28,6 +27,11 @@ class Connect
     protected $saml;
 
     /**
+     * @var Config
+     */
+    protected $config;
+
+    /**
      * @var Dispatcher
      */
     protected $dispatcher;
@@ -40,20 +44,15 @@ class Connect
     /**
      * @var string
      */
-    protected $defaultTargetPath;
-
-    /**
-     * @var string
-     */
     protected $role;
 
     /**
      * Connect constructor.
      *
      * @param Saml   $saml
-     * @param string $defaultTargetPath
+     * @param Config $config
      */
-    public function __construct(Saml $saml, $defaultTargetPath = '/')
+    public function __construct(Saml $saml, Config $config)
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
@@ -64,7 +63,8 @@ class Connect
         }
 
         $this->setSaml($saml);
-        $this->setDefaultTargetPath($defaultTargetPath);
+        $this->setConfig($config);
+
         $this->initDispatcher();
     }
 
@@ -95,7 +95,7 @@ class Connect
      *
      * @return $this
      */
-    public function setUser($user)
+    public function setUser(User $user)
     {
         $this->user = $user;
 
@@ -134,6 +134,30 @@ class Connect
     }
 
     /**
+     * Get Config
+     *
+     * @return Config
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
+    /**
+     * Set Config
+     *
+     * @param Config $config
+     *
+     * @return $this
+     */
+    public function setConfig(Config $config)
+    {
+        $this->config = $config;
+
+        return $this;
+    }
+
+    /**
      * Get Response
      *
      * @return ResponseInterface
@@ -150,7 +174,7 @@ class Connect
      *
      * @return $this
      */
-    public function setResponse($response)
+    public function setResponse(ResponseInterface $response)
     {
         $this->response = $response;
 
@@ -174,33 +198,9 @@ class Connect
      *
      * @return $this
      */
-    public function setDispatcher($dispatcher)
+    public function setDispatcher(Dispatcher $dispatcher)
     {
         $this->dispatcher = $dispatcher;
-
-        return $this;
-    }
-
-    /**
-     * Get RequestedUri
-     *
-     * @return string
-     */
-    public function getDefaultTargetPath()
-    {
-        return $this->defaultTargetPath;
-    }
-
-    /**
-     * Set RequestedUri
-     *
-     * @param string $defaultTargetPath
-     *
-     * @return $this
-     */
-    public function setDefaultTargetPath($defaultTargetPath)
-    {
-        $this->defaultTargetPath = $defaultTargetPath;
 
         return $this;
     }
@@ -250,27 +250,20 @@ class Connect
         $info = $this->getDispatcher()->dispatch($requestMethod, $pathInfo);
         if ($info[0] == Dispatcher::FOUND) {
             try {
-                $this->setUser($info[1]());
+                $response = $info[1]($this);
 
-                $targetedPath = isset($_SESSION['targeted_path'])
-                    ? $_SESSION['targeted_path']
-                    : $this->getDefaultTargetPath();
-
-                unset($_SESSION['targeted_path']);
-                unset($_SESSION['SAML_RelayState']);
-
-                // Redirect to target
-                $this->setResponse(new RedirectResponse($targetedPath));
+                if ($response instanceof ResponseInterface) {
+                    $this->setResponse($response);
+                }
             } catch (SamlException $e) {
                 $this->setResponse($e->getResponse());
             }
         } elseif (!$this->isAuthenticated()) {
-            $request = $this->getSaml()->buildAuthnRequest();
-
-            if (strtoupper($requestMethod) !== 'GET') {
+            if (strtoupper($requestMethod) == 'GET') {
                 $_SESSION['targeted_path'] = $requestUri;
             }
 
+            $request = $this->getSaml()->buildAuthnRequest();
             $_SESSION['SAML_RelayState'] = $request->getRelayState();
 
             $this->setResponse($this->getSaml()->getHttpRedirectBindingResponse($request));
@@ -301,7 +294,8 @@ class Connect
     {
         $this->setDispatcher(
             \FastRoute\simpleDispatcher(function (RouteCollector $r) {
-                $r->addRoute('POST', $this->getSaml()->getAcsLocation(), new SamlResponseHandler($this->getSaml()));
+                $r->addRoute('POST', $this->getSaml()->getAcsLocation(), new SamlResponseHandler());
+                $r->addRoute(['POST', 'GET'], $this->getSaml()->getLogoutLocation(), new SamlLogoutHandler());
             })
         );
     }
