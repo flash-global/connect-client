@@ -16,18 +16,17 @@
     },
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://github.com/flash-global/connect-common.git"
-        },
-        {
             "type": "composer",
             "url": "https://composer.flash-global.net"
         }
     ],
     "require": {
-        "fei/connect-common": "dev-master",
+        "fei/connect-common": "^1.0",
         "lightsaml/lightsaml": "^1.2",
         "nikic/fast-route": "^1.0",
         "zendframework/zend-diactoros": "^1.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.7"
     }
 }

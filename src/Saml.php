@@ -385,7 +385,7 @@ class Saml
      */
     public function validateRelayState(Response $response, $relayState)
     {
-        if ($response->getRelayState() != $relayState) {
+        if ($response->getRelayState() != null && $response->getRelayState() != $relayState) {
             throw new SamlException('urn:oasis:names:tc:SAML:2.0:status:RequestDenied');
         }
     }

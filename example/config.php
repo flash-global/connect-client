@@ -33,16 +33,16 @@ $metadata
             ))
     )->setServiceProvider(
         (new SpSsoDescriptor())
-            ->setID('http://sp.dev:8081')
+            ->setID('http://' . $_SERVER['HTTP_HOST'])
             ->addAssertionConsumerService(
                 new AssertionConsumerService(
-                    'http://sp.dev:8081/acs.php',
+                    'http://' . $_SERVER['HTTP_HOST'] . '/acs.php',
                     SamlConstants::BINDING_SAML2_HTTP_POST
                 )
             )
             ->addSingleLogoutService(
                 new SingleLogoutService(
-                    'http://sp.dev:8081/logout.php',
+                    'http://' . $_SERVER['HTTP_HOST'] . '/logout.php',
                     SamlConstants::BINDING_SAML2_HTTP_POST
                 )
             )

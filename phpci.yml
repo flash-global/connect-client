@@ -1,0 +1,23 @@
+build_settings:
+    ignore:
+        - "vendor"
+        - "tests"
+
+setup:
+    composer:
+        action: "install"
+
+test:
+    php_loc: ~
+    php_mess_detector:
+        allow_failures: true
+    technical_debt:
+        allowed_errors: -1
+    php_unit:
+        config:
+            - "phpunit.xml"
+        coverage: "tests/coverage"
+
+success:
+    shell:
+        - "cd /var/www/satis && php app/bin/satis build --repository-url https://github.com/flash-global/connect-common ./config/satis.json web/"
