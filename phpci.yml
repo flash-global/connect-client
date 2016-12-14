@@ -20,4 +20,4 @@ test:
 
 success:
     shell:
-        - "cd /var/www/satis && php app/bin/satis build --repository-url https://github.com/flash-global/connect-common ./config/satis.json web/"
+        - "cd /var/www/satis && php app/bin/satis build --repository-url https://github.com/flash-global/connect-client ./config/satis.json web/"
