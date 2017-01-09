@@ -9,16 +9,16 @@
     "packages": [
         {
             "name": "doctrine/annotations",
-            "version": "v1.3.0",
+            "version": "v1.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/annotations.git",
-                "reference": "30e07cf03edc3cd3ef579d0dd4dd8c58250799a5"
+                "reference": "bd4461328621bde0ae6b1b2675fbc6aca4ceb558"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/annotations/zipball/30e07cf03edc3cd3ef579d0dd4dd8c58250799a5",
-                "reference": "30e07cf03edc3cd3ef579d0dd4dd8c58250799a5",
+                "url": "https://api.github.com/repos/doctrine/annotations/zipball/bd4461328621bde0ae6b1b2675fbc6aca4ceb558",
+                "reference": "bd4461328621bde0ae6b1b2675fbc6aca4ceb558",
                 "shasum": ""
             },
             "require": {
@@ -73,7 +73,7 @@
                 "docblock",
                 "parser"
             ],
-            "time": "2016-10-24 11:45:47"
+            "time": "2016-12-30 15:59:45"
         },
         {
             "name": "doctrine/collections",
@@ -254,17 +254,17 @@
         },
         {
             "name": "fei/connect-common",
-            "version": "v1.0.1",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "git@github.com:flash-global/connect-common.git",
-                "reference": "c0c53f227cd63fbe1420ac8b6a1ab9581111c682"
+                "reference": "764d80f444420a0cca54d5cceb5509e43ac301bc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/flash-global/connect-common/zipball/c0c53f227cd63fbe1420ac8b6a1ab9581111c682",
-                "reference": "c0c53f227cd63fbe1420ac8b6a1ab9581111c682",
-                "shasum": ""
+                "url": "https://composer.flash-global.net/dist/fei-connect-common-764d80f444420a0cca54d5cceb5509e43ac301bc-zip-b29b76.zip",
+                "reference": "764d80f444420a0cca54d5cceb5509e43ac301bc",
+                "shasum": "7a02918cf0531bd0f0bbdc1304e49be9bc3387a4"
             },
             "require": {
                 "doctrine/annotations": "^1.3",
@@ -292,10 +292,10 @@
             ],
             "description": "Flash Connect common components",
             "support": {
-                "source": "https://github.com/flash-global/connect-common/tree/master",
+                "source": "https://github.com/flash-global/connect-common/tree/v1.0.2",
                 "issues": "https://github.com/flash-global/connect-common/issues"
             },
-            "time": "2016-12-14 16:31:17"
+            "time": "2016-12-16 08:59:18"
         },
         {
             "name": "fei/entities",
@@ -396,16 +396,16 @@
         },
         {
             "name": "nikic/fast-route",
-            "version": "v1.0.1",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/FastRoute.git",
-                "reference": "8ea928195fa9b907f0d6e48312d323c1a13cc2af"
+                "reference": "f3dcf5130e634b6123d40727d612ec6aa4f61fb3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/FastRoute/zipball/8ea928195fa9b907f0d6e48312d323c1a13cc2af",
-                "reference": "8ea928195fa9b907f0d6e48312d323c1a13cc2af",
+                "url": "https://api.github.com/repos/nikic/FastRoute/zipball/f3dcf5130e634b6123d40727d612ec6aa4f61fb3",
+                "reference": "f3dcf5130e634b6123d40727d612ec6aa4f61fb3",
                 "shasum": ""
             },
             "require": {
@@ -435,7 +435,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2016-06-12 19:08:51"
+            "time": "2016-10-20 17:36:47"
         },
         {
             "name": "psr/http-message",
@@ -702,16 +702,16 @@
         },
         {
             "name": "zendframework/zend-diactoros",
-            "version": "1.3.7",
+            "version": "1.3.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-diactoros.git",
-                "reference": "969ff423d3f201da3ff718a5831bb999bb0669b0"
+                "reference": "d9c1fd7c4b024179d49faf367da544b4eef7cfe8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-diactoros/zipball/969ff423d3f201da3ff718a5831bb999bb0669b0",
-                "reference": "969ff423d3f201da3ff718a5831bb999bb0669b0",
+                "url": "https://api.github.com/repos/zendframework/zend-diactoros/zipball/d9c1fd7c4b024179d49faf367da544b4eef7cfe8",
+                "reference": "d9c1fd7c4b024179d49faf367da544b4eef7cfe8",
                 "shasum": ""
             },
             "require": {
@@ -723,7 +723,7 @@
             },
             "require-dev": {
                 "phpunit/phpunit": "^4.6 || ^5.5",
-                "squizlabs/php_codesniffer": "^2.3.1"
+                "zendframework/zend-coding-standard": "~1.0.0"
             },
             "type": "library",
             "extra": {
@@ -748,7 +748,7 @@
                 "psr",
                 "psr-7"
             ],
-            "time": "2016-10-11 13:25:21"
+            "time": "2017-01-05 21:44:28"
         }
     ],
     "packages-dev": [
@@ -1059,16 +1059,16 @@
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "4.0.3",
+            "version": "4.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "903fd6318d0a90b4770a009ff73e4a4e9c437929"
+                "reference": "c14196e64a78570034afd0b7a9f3757ba71c2a0a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/903fd6318d0a90b4770a009ff73e4a4e9c437929",
-                "reference": "903fd6318d0a90b4770a009ff73e4a4e9c437929",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/c14196e64a78570034afd0b7a9f3757ba71c2a0a",
+                "reference": "c14196e64a78570034afd0b7a9f3757ba71c2a0a",
                 "shasum": ""
             },
             "require": {
@@ -1118,7 +1118,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2016-11-28 16:00:31"
+            "time": "2016-12-20 15:22:42"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -1303,16 +1303,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "5.7.4",
+            "version": "5.7.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "af91da3f2671006ff5d0628023de3b7ac4d1ef09"
+                "reference": "50fd2be8f3e23e91da825f36f08e5f9633076ffe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/af91da3f2671006ff5d0628023de3b7ac4d1ef09",
-                "reference": "af91da3f2671006ff5d0628023de3b7ac4d1ef09",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/50fd2be8f3e23e91da825f36f08e5f9633076ffe",
+                "reference": "50fd2be8f3e23e91da825f36f08e5f9633076ffe",
                 "shasum": ""
             },
             "require": {
@@ -1381,7 +1381,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2016-12-13 16:19:44"
+            "time": "2016-12-28 07:18:51"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
