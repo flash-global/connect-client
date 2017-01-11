@@ -51,7 +51,7 @@ class Saml
      */
     public function __construct(Metadata $metadata)
     {
-        $this->metadata = $metadata;
+        $this->setMetadata($metadata);
     }
 
     /**

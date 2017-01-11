@@ -33,7 +33,7 @@ $metadata
             ))
     )->setServiceProvider(
         (new SpSsoDescriptor())
-            ->setID('http://' . $_SERVER['HTTP_HOST'])
+            ->setID('https://pricer.flash.global')
             ->addAssertionConsumerService(
                 new AssertionConsumerService(
                     'http://' . $_SERVER['HTTP_HOST'] . '/acs.php',
