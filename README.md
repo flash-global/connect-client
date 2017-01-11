@@ -1,16 +1,15 @@
 # Connect-Client
 
-The role of Connect-Client is to integrate standard SAML protocol into your application.
+The role of Connect-Client is to integrate SAML standard protocol into your application.
 
-It will allow you to validate an user's identity, get specific information about him, and define his authorizations through assertions.
+It will allow you to validate an user's authentication with a SSO (Single Sign-On) device, get specific information
+about him, and define his authorizations through assertions.
 
-Check out `connect-idp` documentation for more information about SAML protocol.
+Check out `connect-idp` documentation for more information about SAML standard protocol.
 
-## Installation
+## Installation & prerequisites
 
-### Prerequisites
-
-Connect-Client needs **PHP 5.5**, with the extension `mcrypt` to run correctly.
+Connect-Client needs **PHP 5.5** or up, with the extension `mcrypt` plugged to run correctly.
 
 You will have to integrate it to your project with `composer require fei/connect-client`
 
@@ -21,9 +20,7 @@ Here is an example on how it works (See `/example` folder):
 ```php
 $metadata = new Metadata();
 
-// Configure your metadata
-// .....................
-// See next chapter
+// Configure your metadata... (See next chapter)
 
 $config = (new Config())
     ->setDefaultTargetPath('/resource.php')
@@ -33,14 +30,14 @@ $connect = new Connect(new Saml($metadata), $config);
 $connect->handleRequest($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'])->emit();
 ```
 
-After you instanciated a new `Metadata` object, and configured it (cf **Setting up your metadata**), create a new `Connect` object which will take two parameter:
+After you created a new `Metadata` instance, and configured it (cf **Setting up your metadata**), create a new `Connect` object which will take two parameter:
 
 - A new `SAML` instance (which allow you to use every SAML methods) which will take our metadata as parameter:
 - A `Config` which has to be filled with:
     - `defaultTargetPath` which is an URI where the user will be redirected to, if the login response doesn't contain one
-    - `logoutTargetPath` which will be used to redirect the user after he logged out`
+    - `logoutTargetPath` which will be used to redirect the user after he logged out
 
-    Default path for both setters is `'/'`
+Default path for both setters is `/`
 
 Finally, using the method `handleRequest` from the newly `Connect` object will validate (or not) the request, and redirect the user.
 
@@ -50,44 +47,44 @@ To fill the `Metadata` instance, two objects are necessary: the `Identity Provid
 
 ```php
 $metadata->setIdentityProvider(
-            (new IdpSsoDescriptor())
-                ->setID('http://idp.dev:8080')
-                ->setWantAuthnRequestsSigned(true)
-                ->addSingleSignOnService(
-                    new SingleSignOnService('http://idp.dev:8080/sso', SamlConstants::BINDING_SAML2_HTTP_REDIRECT)
-                )
-                ->addSingleLogoutService(
-                    new SingleLogoutService('http://idp.dev:8080/logout', SamlConstants::BINDING_SAML2_HTTP_POST)
-                )
-                ->addKeyDescriptor(new KeyDescriptor(
-                    KeyDescriptor::USE_SIGNING,
-                    X509Certificate::fromFile(__DIR__ . '/keys/idp/idp.crt')
-                ))
-        )->setServiceProvider(
-            (new SpSsoDescriptor())
-                ->setID('http://' . $_SERVER['HTTP_HOST'])
-                ->addAssertionConsumerService(
-                    new AssertionConsumerService(
-                        'http://' . $_SERVER['HTTP_HOST'] . '/acs.php',
-                        SamlConstants::BINDING_SAML2_HTTP_POST
-                    )
-                )
-                ->addSingleLogoutService(
-                    new SingleLogoutService(
-                        'http://' . $_SERVER['HTTP_HOST'] . '/logout.php',
-                        SamlConstants::BINDING_SAML2_HTTP_POST
-                    )
-                )
-                ->addKeyDescriptor(new KeyDescriptor(
-                    KeyDescriptor::USE_SIGNING,
-                    X509Certificate::fromFile(__DIR__ . '/keys/sp.crt')
-                ))
-                ->addKeyDescriptor(new KeyDescriptor(
-                    KeyDescriptor::USE_ENCRYPTION,
-                    X509Certificate::fromFile(__DIR__ . '/keys/sp.crt')
-                )),
-            file_get_contents(__DIR__ . '/keys/sp.pem')
-        );
+    (new IdpSsoDescriptor())
+        ->setID('http://idp.dev:8080')
+        ->setWantAuthnRequestsSigned(true)
+        ->addSingleSignOnService(
+            new SingleSignOnService('http://idp.dev:8080/sso', SamlConstants::BINDING_SAML2_HTTP_REDIRECT)
+        )
+        ->addSingleLogoutService(
+            new SingleLogoutService('http://idp.dev:8080/logout', SamlConstants::BINDING_SAML2_HTTP_POST)
+        )
+        ->addKeyDescriptor(new KeyDescriptor(
+            KeyDescriptor::USE_SIGNING,
+            X509Certificate::fromFile(__DIR__ . '/keys/idp/idp.crt')
+        ))
+)->setServiceProvider(
+    (new SpSsoDescriptor())
+        ->setID('http://' . $_SERVER['HTTP_HOST'])
+        ->addAssertionConsumerService(
+            new AssertionConsumerService(
+                'http://' . $_SERVER['HTTP_HOST'] . '/acs.php',
+                SamlConstants::BINDING_SAML2_HTTP_POST
+            )
+        )
+        ->addSingleLogoutService(
+            new SingleLogoutService(
+                'http://' . $_SERVER['HTTP_HOST'] . '/logout.php',
+                SamlConstants::BINDING_SAML2_HTTP_POST
+            )
+        )
+        ->addKeyDescriptor(new KeyDescriptor(
+            KeyDescriptor::USE_SIGNING,
+            X509Certificate::fromFile(__DIR__ . '/keys/sp.crt')
+        ))
+        ->addKeyDescriptor(new KeyDescriptor(
+            KeyDescriptor::USE_ENCRYPTION,
+            X509Certificate::fromFile(__DIR__ . '/keys/sp.crt')
+        )),
+    file_get_contents(__DIR__ . '/keys/sp.pem')
+);
 ```
 
 ### Identity Provider
