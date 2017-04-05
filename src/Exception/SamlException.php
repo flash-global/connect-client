@@ -13,7 +13,7 @@ use LightSaml\Model\Protocol\Response as SamlResponse;
  *
  * @package Fei\Service\Connect\Client\Exception
  */
-class SamlException extends \Exception
+class SamlException extends \Exception implements ResponseExceptionInterface
 {
     /**
      * @var string
@@ -34,9 +34,7 @@ class SamlException extends \Exception
     }
 
     /**
-     * Get exception response to emit
-     *
-     * @return Response
+     * {@inheritdoc}
      */
     public function getResponse()
     {

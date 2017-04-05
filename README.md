@@ -121,3 +121,38 @@ As the `IdpSsoDescriptor`, the `SpSsoDescriptor` must be filled with different p
 - `addKeyDescriptor` is used to associate a certificate to the SsoDescriptor. Those certificates will be used to:
     - Sign the AuthnRequest
     - Decrypt assertions.
+
+### Profile Association
+
+You could register with `Config::registerProfileAssociation(callable $callback, $profileAssociationPath = '/connect/profile-association')`
+a profile association callback for handling request provided by Connect-IDP. The callback must have one parameter which
+must implement `Fei\Service\Connect\Client\Message\ProfileAssociationMessageInterface` and must return a instance of
+`Fei\Service\Connect\Client\Message\ProfileAssociationResponse` :
+
+```php
+$config = (new Config())
+    ->registerProfileAssociation(
+        function (UsernamePasswordMessage $message) {
+            if (empty($message->getUsername())) {
+                throw new ProfileAssociationException('Username could not be empty', 400);
+            }
+
+            if (empty($message->getPassword())) {
+                throw new ProfileAssociationException('Password could not be empty', 400);
+            }
+
+            if ($message->getUsername() != 'test' && $message->getPassword() != 'test') {
+                throw new ProfileAssociationException('Profile not found', 400);
+            }
+
+            return new ProfileAssociationResponse('OK');
+        },
+        '/connect-profile-association'
+    );
+```
+
+If you decide that a request from Connect-IDP is not valid you must throw a `Fei\Service\Connect\Client\Exception\ProfileAssociationException`
+instance with a message and a HTTP error code which will be transmitted to Connect-IPD.
+
+All message between Connect-IPD and your Connect-client integration are encrypted so you must set private and public
+keys for IDP and your Service Provider with metadata configuration directive.  
