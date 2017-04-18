@@ -4,6 +4,9 @@ include __DIR__ . '/../vendor/autoload.php';
 
 use Fei\Service\Connect\Client\Config;
 use Fei\Service\Connect\Client\Connect;
+use Fei\Service\Connect\Client\Exception\ProfileAssociationException;
+use Fei\Service\Connect\Client\Message\ProfileAssociationResponse;
+use Fei\Service\Connect\Client\Message\UsernamePasswordMessage;
 use Fei\Service\Connect\Client\Metadata;
 use Fei\Service\Connect\Client\Saml;
 use LightSaml\Credential\X509Certificate;
@@ -33,7 +36,7 @@ $metadata
             ))
     )->setServiceProvider(
         (new SpSsoDescriptor())
-            ->setID('https://pricer.flash.global')
+            ->setID('http://translate.dev:8084')
             ->addAssertionConsumerService(
                 new AssertionConsumerService(
                     'http://' . $_SERVER['HTTP_HOST'] . '/acs.php',
@@ -59,7 +62,25 @@ $metadata
 
 $config = (new Config())
     ->setDefaultTargetPath('/resource.php')
-    ->setLogoutTargetPath('/');
+    ->setLogoutTargetPath('/')
+    ->registerProfileAssociation(
+        function (UsernamePasswordMessage $message) {
+            if (empty($message->getUsername())) {
+                throw new ProfileAssociationException('Username could not be empty', 400);
+            }
+
+            if (empty($message->getPassword())) {
+                throw new ProfileAssociationException('Password could not be empty', 400);
+            }
+
+            if ($message->getUsername() != 'test' && $message->getPassword() != 'test') {
+                throw new ProfileAssociationException('Profile not found', 400);
+            }
+
+            return new ProfileAssociationResponse('OK');
+        },
+        '/profile-association.php'
+    );
 
 $connect = new Connect(new Saml($metadata), $config);
 $connect->handleRequest($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'])->emit();
