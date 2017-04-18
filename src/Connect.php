@@ -4,7 +4,10 @@ namespace Fei\Service\Connect\Client;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use Fei\Service\Connect\Client\Exception\SamlException;
+use Fei\Service\Connect\Client\Exception\ProfileAssociationException;
+use Fei\Service\Connect\Client\Exception\ResponseExceptionInterface;
+use Fei\Service\Connect\Client\Message\ProfileAssociationRequestFactory;
+use Fei\Service\Connect\Client\Message\ProfileAssociationResponse;
 use Fei\Service\Connect\Common\Entity\User;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
@@ -236,6 +239,8 @@ class Connect
      * @param string $requestMethod
      *
      * @return $this
+     *
+     * @throws \Exception
      */
     public function handleRequest($requestUri = null, $requestMethod = null)
     {
@@ -248,15 +253,51 @@ class Connect
         $pathInfo = rawurldecode($pathInfo);
 
         $info = $this->getDispatcher()->dispatch($requestMethod, $pathInfo);
+
         if ($info[0] == Dispatcher::FOUND) {
+            $certificate = $this->getSaml()
+                ->getMetadata()
+                ->getIdentityProvider()
+                ->getFirstKeyDescriptor()
+                ->getCertificate()->toPem();
+
             try {
-                $response = $info[1]($this);
+                $response = null;
+
+                if ($pathInfo == $this->getConfig()->getProfileAssociationPath()) {
+                    $response = $info[1](
+                        ProfileAssociationRequestFactory::fromGlobals()
+                            ->extractProfileAssociationMessage(
+                                $this->getSaml()->getMetadata()->getServiceProviderPrivateKey()
+                            )
+                    );
+
+                    if (!$response instanceof ProfileAssociationResponse) {
+                        throw new \LogicException(
+                            sprintf(
+                                'Profile association callback must return a instance of %s, %s returned.',
+                                ProfileAssociationResponse::class,
+                                is_object($response) ? get_class($response) : gettype($response)
+                            )
+                        );
+                    }
+
+                    $response = $response->buildMessageResponse($certificate);
+                } else {
+                    $response = $info[1]($this);
+                }
 
                 if ($response instanceof ResponseInterface) {
                     $this->setResponse($response);
                 }
-            } catch (SamlException $e) {
-                $this->setResponse($e->getResponse());
+            } catch (\Exception $e) {
+                if ($e instanceof ProfileAssociationException) {
+                    $this->setResponse($e->getResponse()->buildMessageResponse($certificate));
+                } elseif ($e instanceof ResponseExceptionInterface) {
+                    $this->setResponse($e->getResponse());
+                } else {
+                    throw $e;
+                }
             }
         } elseif (!$this->isAuthenticated()) {
             if (strtoupper($requestMethod) == 'GET') {
@@ -296,6 +337,14 @@ class Connect
             \FastRoute\simpleDispatcher(function (RouteCollector $r) {
                 $r->addRoute('POST', $this->getSaml()->getAcsLocation(), new SamlResponseHandler());
                 $r->addRoute(['POST', 'GET'], $this->getSaml()->getLogoutLocation(), new SamlLogoutHandler());
+
+                if ($this->getConfig()->hasProfileAssociationCallback()) {
+                    $r->addRoute(
+                        'POST',
+                        $this->getConfig()->getProfileAssociationPath(),
+                        $this->getConfig()->getProfileAssociationCallback()
+                    );
+                }
             })
         );
     }
