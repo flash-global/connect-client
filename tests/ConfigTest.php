@@ -3,8 +3,8 @@
 namespace Test\Fei\Service\Connect\Client;
 
 use Fei\Service\Connect\Client\Config;
-use Fei\Service\Connect\Client\Message\ProfileAssociationMessageInterface;
-use Fei\Service\Connect\Client\Message\UsernamePasswordMessage;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\RequestMessageInterface;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\UsernamePasswordMessage;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -41,7 +41,7 @@ class ConfigTest extends TestCase
         $this->assertEquals('/connect/profile-association', $config->getProfileAssociationPath());
 
         $config->registerProfileAssociation(
-            function (ProfileAssociationMessageInterface $message) {
+            function (RequestMessageInterface $message) {
             },
             'test'
         );
@@ -56,7 +56,7 @@ class ConfigTest extends TestCase
 
         $this->assertEquals(null, $config->getProfileAssociationCallback());
 
-        $callback = function (ProfileAssociationMessageInterface $message) {
+        $callback = function (RequestMessageInterface $message) {
         };
 
         $config->registerProfileAssociation($callback);
@@ -94,7 +94,7 @@ class ConfigTest extends TestCase
         $this->expectExceptionMessage(
             sprintf(
                 'First parameter of the profile association callback must be a type of %s',
-                ProfileAssociationMessageInterface::class
+                RequestMessageInterface::class
             )
         );
 
