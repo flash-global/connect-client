@@ -2,7 +2,7 @@
 
 namespace Fei\Service\Connect\Client;
 
-use Fei\Service\Connect\Client\Message\ProfileAssociationMessageInterface;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\RequestMessageInterface;
 
 /**
  * Class Config
@@ -124,14 +124,14 @@ class Config
         $parameters = (new \ReflectionFunction($callback))->getParameters();
 
         if (!isset($parameters[0]) || $parameters[0]->getClass() == null ||
-            ($parameters[0]->getClass()->getName() != ProfileAssociationMessageInterface::class &&
-                !in_array(ProfileAssociationMessageInterface::class, $parameters[0]->getClass()->getInterfaceNames())
+            ($parameters[0]->getClass()->getName() != RequestMessageInterface::class &&
+                !in_array(RequestMessageInterface::class, $parameters[0]->getClass()->getInterfaceNames())
             )
         ) {
             throw new \LogicException(
                 sprintf(
                     'First parameter of the profile association callback must be a type of %s',
-                    ProfileAssociationMessageInterface::class
+                    RequestMessageInterface::class
                 )
             );
         }

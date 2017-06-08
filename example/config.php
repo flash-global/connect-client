@@ -4,11 +4,11 @@ include __DIR__ . '/../vendor/autoload.php';
 
 use Fei\Service\Connect\Client\Config;
 use Fei\Service\Connect\Client\Connect;
-use Fei\Service\Connect\Client\Exception\ProfileAssociationException;
-use Fei\Service\Connect\Client\Message\ProfileAssociationResponse;
-use Fei\Service\Connect\Client\Message\UsernamePasswordMessage;
 use Fei\Service\Connect\Client\Metadata;
 use Fei\Service\Connect\Client\Saml;
+use Fei\Service\Connect\Common\ProfileAssociation\Exception\ProfileAssociationException;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\ResponseMessage;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\UsernamePasswordMessage;
 use LightSaml\Credential\X509Certificate;
 use LightSaml\Model\Metadata\AssertionConsumerService;
 use LightSaml\Model\Metadata\IdpSsoDescriptor;
@@ -65,19 +65,11 @@ $config = (new Config())
     ->setLogoutTargetPath('/')
     ->registerProfileAssociation(
         function (UsernamePasswordMessage $message) {
-            if (empty($message->getUsername())) {
-                throw new ProfileAssociationException('Username could not be empty', 400);
-            }
-
-            if (empty($message->getPassword())) {
-                throw new ProfileAssociationException('Password could not be empty', 400);
-            }
-
-            if ($message->getUsername() != 'test' && $message->getPassword() != 'test') {
+            if ($message->getUsername() != 'test' || $message->getPassword() != 'test') {
                 throw new ProfileAssociationException('Profile not found', 400);
             }
 
-            return new ProfileAssociationResponse('OK');
+            return (new ResponseMessage())->setRole('USER');
         },
         '/profile-association.php'
     );

@@ -2,6 +2,7 @@
 
 namespace Fei\Service\Connect\Client\Exception;
 
+use Fei\Service\Connect\Common\Exception\ResponseExceptionInterface;
 use LightSaml\Model\Context\SerializationContext;
 use LightSaml\Model\Protocol\Status;
 use LightSaml\Model\Protocol\StatusCode;

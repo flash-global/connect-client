@@ -11,5 +11,7 @@ include __DIR__ . '/config.php';
     <p>My resource !</p>
     <p><a href="/logout.php">Logout</a></p>
     <?php var_dump($_SESSION) ?>
+    <?php var_dump($_SESSION['user']['attributions']) ?>
+    <?php var_dump($connect) ?>
 </body>
 </html>
