@@ -126,33 +126,36 @@ As the `IdpSsoDescriptor`, the `SpSsoDescriptor` must be filled with different p
 
 You could register with `Config::registerProfileAssociation(callable $callback, $profileAssociationPath = '/connect/profile-association')`
 a profile association callback for handling request provided by Connect-IDP. The callback must have one parameter which
-must implement `Fei\Service\Connect\Client\Message\ProfileAssociationMessageInterface` and must return a instance of
-`Fei\Service\Connect\Client\Message\ProfileAssociationResponse` :
+must implement `Fei\Service\Connect\Common\ProfileAssociation\Message\RequestMessageInterface` and must return a instance of
+`Fei\Service\Connect\Common\ProfileAssociation\Message\ResponseMessageInterface` :
 
 ```php
 $config = (new Config())
     ->registerProfileAssociation(
         function (UsernamePasswordMessage $message) {
-            if (empty($message->getUsername())) {
-                throw new ProfileAssociationException('Username could not be empty', 400);
-            }
-
-            if (empty($message->getPassword())) {
-                throw new ProfileAssociationException('Password could not be empty', 400);
-            }
-
-            if ($message->getUsername() != 'test' && $message->getPassword() != 'test') {
+            if ($message->getUsername() != 'test' || $message->getPassword() != 'test') {
                 throw new ProfileAssociationException('Profile not found', 400);
             }
 
-            return new ProfileAssociationResponse('OK');
+            // Get allowed roles
+            $roles = $message->getRoles();
+
+            return (new ResponseMessage())->setRole('USER');
         },
         '/connect-profile-association'
     );
 ```
 
-If you decide that a request from Connect-IDP is not valid you must throw a `Fei\Service\Connect\Client\Exception\ProfileAssociationException`
+Role that the association profile message must set is provided by the RequestMessage. If the role returned is not valid
+(not provided by the RequestMessage) a \LogicException will be throw.
+
+If you decide that a request from Connect-IDP is not valid you must throw a `Fei\Service\Connect\Common\ProfileAssociation\Exception\ProfileAssociationException`
 instance with a message and a HTTP error code which will be transmitted to Connect-IPD.
 
-All message between Connect-IPD and your Connect-client integration are encrypted so you must set private and public
-keys for IDP and your Service Provider with metadata configuration directive.  
+All messages between Connect-IPD and your Connect-client integration are encrypted so you must set private and public
+keys for IDP and your Service Provider with metadata configuration directive.
+ 
+#### Get role and local username
+
+If the current user which the client provide with the method `Client::getUser()` is the result of a profile association,
+you could get the local username and role with respectively `Client::getLocalUsername()` and `Client::getRole()`.

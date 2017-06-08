@@ -4,11 +4,16 @@ namespace Fei\Service\Connect\Client;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use Fei\Service\Connect\Client\Exception\ProfileAssociationException;
-use Fei\Service\Connect\Client\Exception\ResponseExceptionInterface;
-use Fei\Service\Connect\Client\Message\ProfileAssociationRequestFactory;
-use Fei\Service\Connect\Client\Message\ProfileAssociationResponse;
 use Fei\Service\Connect\Common\Entity\User;
+use Fei\Service\Connect\Common\Exception\ResponseExceptionInterface;
+use Fei\Service\Connect\Common\ProfileAssociation\Exception\ProfileAssociationException;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\Extractor\MessageExtractor;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\Hydrator\MessageHydrator;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\RequestMessageInterface;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\ResponseMessageInterface;
+use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationMessageExtractor;
+use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationResponse;
+use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationServerRequestFactory;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
 
@@ -48,6 +53,11 @@ class Connect
      * @var string
      */
     protected $role;
+
+    /**
+     * @var string
+     */
+    protected $localUsername;
 
     /**
      * Connect constructor.
@@ -107,6 +117,7 @@ class Connect
         if ($this->user instanceof User) {
             $_SESSION['user'] = $this->user->toArray();
             $this->setRole($this->user->getCurrentRole());
+            $this->setLocalUsername($this->user->getLocalUsername());
         }
 
         return $this;
@@ -233,6 +244,30 @@ class Connect
     }
 
     /**
+     * Get LocalUsername
+     *
+     * @return string
+     */
+    public function getLocalUsername()
+    {
+        return $this->localUsername;
+    }
+
+    /**
+     * Set LocalUsername
+     *
+     * @param string $localUsername
+     *
+     * @return $this
+     */
+    public function setLocalUsername($localUsername)
+    {
+        $this->localUsername = $localUsername;
+
+        return $this;
+    }
+
+    /**
      * Handle connect request
      *
      * @param string $requestUri
@@ -265,24 +300,39 @@ class Connect
                 $response = null;
 
                 if ($pathInfo == $this->getConfig()->getProfileAssociationPath()) {
-                    $response = $info[1](
-                        ProfileAssociationRequestFactory::fromGlobals()
-                            ->extractProfileAssociationMessage(
-                                $this->getSaml()->getMetadata()->getServiceProviderPrivateKey()
-                            )
-                    );
+                    /** @var RequestMessageInterface $requestMessage */
+                    $requestMessage = ProfileAssociationServerRequestFactory::fromGlobals()
+                        ->setProfileAssociationMessageExtractor(
+                            (new ProfileAssociationMessageExtractor())
+                                ->setMessageExtractor((new MessageExtractor())->setHydrator(new MessageHydrator()))
+                        )
+                        ->extract(
+                            $this->getSaml()->getMetadata()->getServiceProviderPrivateKey()
+                        );
 
-                    if (!$response instanceof ProfileAssociationResponse) {
+                    $responseMessage = $info[1]($requestMessage);
+
+                    if (!$responseMessage instanceof ResponseMessageInterface) {
                         throw new \LogicException(
                             sprintf(
                                 'Profile association callback must return a instance of %s, %s returned.',
-                                ProfileAssociationResponse::class,
+                                ResponseMessageInterface::class,
                                 is_object($response) ? get_class($response) : gettype($response)
                             )
                         );
                     }
 
-                    $response = $response->buildMessageResponse($certificate);
+                    if (!in_array($responseMessage->getRole(), $requestMessage->getRoles())) {
+                        throw new \LogicException(
+                            sprintf(
+                                'Role provided by response message "%s" is not in roles "%s"',
+                                $responseMessage->getRole(),
+                                implode(', ', $requestMessage->getRoles())
+                            )
+                        );
+                    }
+
+                    $response = (new ProfileAssociationResponse($responseMessage))->build($certificate);
                 } else {
                     $response = $info[1]($this);
                 }
@@ -292,7 +342,7 @@ class Connect
                 }
             } catch (\Exception $e) {
                 if ($e instanceof ProfileAssociationException) {
-                    $this->setResponse($e->getResponse()->buildMessageResponse($certificate));
+                    $this->setResponse($e->setCertificate($certificate)->getResponse());
                 } elseif ($e instanceof ResponseExceptionInterface) {
                     $this->setResponse($e->getResponse());
                 } else {
