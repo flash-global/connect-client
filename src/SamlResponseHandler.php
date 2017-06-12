@@ -2,6 +2,7 @@
 
 namespace Fei\Service\Connect\Client;
 
+use Fei\Service\Connect\Client\Exception\SamlException;
 use Zend\Diactoros\Response\RedirectResponse;
 
 /**
@@ -17,10 +18,16 @@ class SamlResponseHandler
      * @param Connect $connect
      *
      * @return RedirectResponse
+     *
+     * @throws SamlException
      */
     public function __invoke(Connect $connect)
     {
         $response = $connect->getSaml()->receiveSamlResponse();
+
+        if (!$response) {
+            throw new SamlException('urn:oasis:names:tc:SAML:2.0:status:RequestDenied');
+        }
 
         $connect->getSaml()->validateResponse(
             $response,

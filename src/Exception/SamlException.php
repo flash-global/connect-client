@@ -2,6 +2,7 @@
 
 namespace Fei\Service\Connect\Client\Exception;
 
+use Fei\Service\Connect\Common\Exception\ResponseExceptionInterface;
 use LightSaml\Model\Context\SerializationContext;
 use LightSaml\Model\Protocol\Status;
 use LightSaml\Model\Protocol\StatusCode;
@@ -13,7 +14,7 @@ use LightSaml\Model\Protocol\Response as SamlResponse;
  *
  * @package Fei\Service\Connect\Client\Exception
  */
-class SamlException extends \Exception
+class SamlException extends \Exception implements ResponseExceptionInterface
 {
     /**
      * @var string
@@ -34,9 +35,7 @@ class SamlException extends \Exception
     }
 
     /**
-     * Get exception response to emit
-     *
-     * @return Response
+     * {@inheritdoc}
      */
     public function getResponse()
     {

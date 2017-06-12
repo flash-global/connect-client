@@ -4,8 +4,16 @@ namespace Fei\Service\Connect\Client;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use Fei\Service\Connect\Client\Exception\SamlException;
 use Fei\Service\Connect\Common\Entity\User;
+use Fei\Service\Connect\Common\Exception\ResponseExceptionInterface;
+use Fei\Service\Connect\Common\ProfileAssociation\Exception\ProfileAssociationException;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\Extractor\MessageExtractor;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\Hydrator\MessageHydrator;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\RequestMessageInterface;
+use Fei\Service\Connect\Common\ProfileAssociation\Message\ResponseMessageInterface;
+use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationMessageExtractor;
+use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationResponse;
+use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationServerRequestFactory;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
 
@@ -45,6 +53,11 @@ class Connect
      * @var string
      */
     protected $role;
+
+    /**
+     * @var string
+     */
+    protected $localUsername;
 
     /**
      * Connect constructor.
@@ -104,6 +117,7 @@ class Connect
         if ($this->user instanceof User) {
             $_SESSION['user'] = $this->user->toArray();
             $this->setRole($this->user->getCurrentRole());
+            $this->setLocalUsername($this->user->getLocalUsername());
         }
 
         return $this;
@@ -230,12 +244,38 @@ class Connect
     }
 
     /**
+     * Get LocalUsername
+     *
+     * @return string
+     */
+    public function getLocalUsername()
+    {
+        return $this->localUsername;
+    }
+
+    /**
+     * Set LocalUsername
+     *
+     * @param string $localUsername
+     *
+     * @return $this
+     */
+    public function setLocalUsername($localUsername)
+    {
+        $this->localUsername = $localUsername;
+
+        return $this;
+    }
+
+    /**
      * Handle connect request
      *
      * @param string $requestUri
      * @param string $requestMethod
      *
      * @return $this
+     *
+     * @throws \Exception
      */
     public function handleRequest($requestUri = null, $requestMethod = null)
     {
@@ -248,15 +288,66 @@ class Connect
         $pathInfo = rawurldecode($pathInfo);
 
         $info = $this->getDispatcher()->dispatch($requestMethod, $pathInfo);
+
         if ($info[0] == Dispatcher::FOUND) {
+            $certificate = $this->getSaml()
+                ->getMetadata()
+                ->getIdentityProvider()
+                ->getFirstKeyDescriptor()
+                ->getCertificate()->toPem();
+
             try {
-                $response = $info[1]($this);
+                $response = null;
+
+                if ($pathInfo == $this->getConfig()->getProfileAssociationPath()) {
+                    /** @var RequestMessageInterface $requestMessage */
+                    $requestMessage = ProfileAssociationServerRequestFactory::fromGlobals()
+                        ->setProfileAssociationMessageExtractor(
+                            (new ProfileAssociationMessageExtractor())
+                                ->setMessageExtractor((new MessageExtractor())->setHydrator(new MessageHydrator()))
+                        )
+                        ->extract(
+                            $this->getSaml()->getMetadata()->getServiceProviderPrivateKey()
+                        );
+
+                    $responseMessage = $info[1]($requestMessage);
+
+                    if (!$responseMessage instanceof ResponseMessageInterface) {
+                        throw new \LogicException(
+                            sprintf(
+                                'Profile association callback must return a instance of %s, %s returned.',
+                                ResponseMessageInterface::class,
+                                is_object($response) ? get_class($response) : gettype($response)
+                            )
+                        );
+                    }
+
+                    if (!in_array($responseMessage->getRole(), $requestMessage->getRoles())) {
+                        throw new \LogicException(
+                            sprintf(
+                                'Role provided by response message "%s" is not in roles "%s"',
+                                $responseMessage->getRole(),
+                                implode(', ', $requestMessage->getRoles())
+                            )
+                        );
+                    }
+
+                    $response = (new ProfileAssociationResponse($responseMessage))->build($certificate);
+                } else {
+                    $response = $info[1]($this);
+                }
 
                 if ($response instanceof ResponseInterface) {
                     $this->setResponse($response);
                 }
-            } catch (SamlException $e) {
-                $this->setResponse($e->getResponse());
+            } catch (\Exception $e) {
+                if ($e instanceof ProfileAssociationException) {
+                    $this->setResponse($e->setCertificate($certificate)->getResponse());
+                } elseif ($e instanceof ResponseExceptionInterface) {
+                    $this->setResponse($e->getResponse());
+                } else {
+                    throw $e;
+                }
             }
         } elseif (!$this->isAuthenticated()) {
             if (strtoupper($requestMethod) == 'GET') {
@@ -296,6 +387,14 @@ class Connect
             \FastRoute\simpleDispatcher(function (RouteCollector $r) {
                 $r->addRoute('POST', $this->getSaml()->getAcsLocation(), new SamlResponseHandler());
                 $r->addRoute(['POST', 'GET'], $this->getSaml()->getLogoutLocation(), new SamlLogoutHandler());
+
+                if ($this->getConfig()->hasProfileAssociationCallback()) {
+                    $r->addRoute(
+                        'POST',
+                        $this->getConfig()->getProfileAssociationPath(),
+                        $this->getConfig()->getProfileAssociationCallback()
+                    );
+                }
             })
         );
     }
