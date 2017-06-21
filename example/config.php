@@ -2,6 +2,7 @@
 
 include __DIR__ . '/../vendor/autoload.php';
 
+use Fei\ApiClient\Transport\BasicTransport;
 use Fei\Service\Connect\Client\Config;
 use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Metadata;
@@ -74,5 +75,10 @@ $config = (new Config())
         '/profile-association.php'
     );
 
-$connect = new Connect(new Saml($metadata), $config);
+$connect = new Connect(
+    new Saml($metadata),
+    $config,
+    [Connect::OPTION_BASEURL => 'http://idp.dev:8080']
+);
+$connect->setTransport(new BasicTransport());
 $connect->handleRequest($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'])->emit();

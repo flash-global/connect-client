@@ -4,6 +4,9 @@ namespace Fei\Service\Connect\Client;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
+use Fei\ApiClient\AbstractApiClient;
+use Fei\ApiClient\ApiClientException;
+use Fei\ApiClient\RequestDescriptor;
 use Fei\Service\Connect\Common\Entity\User;
 use Fei\Service\Connect\Common\Exception\ResponseExceptionInterface;
 use Fei\Service\Connect\Common\ProfileAssociation\Exception\ProfileAssociationException;
@@ -14,6 +17,9 @@ use Fei\Service\Connect\Common\ProfileAssociation\Message\ResponseMessageInterfa
 use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationMessageExtractor;
 use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationResponse;
 use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationServerRequestFactory;
+use Fei\Service\Connect\Common\Token\Tokenizer;
+use Guzzle\Http\Exception\BadResponseException;
+use Lcobucci\JWT\Token;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
 
@@ -22,7 +28,7 @@ use Zend\Diactoros\Response;
  *
  * @package Fei\Service\Connect\Client
  */
-class Connect
+class Connect extends AbstractApiClient
 {
     /**
      * @var User
@@ -64,8 +70,9 @@ class Connect
      *
      * @param Saml   $saml
      * @param Config $config
+     * @param array  $option
      */
-    public function __construct(Saml $saml, Config $config)
+    public function __construct(Saml $saml, Config $config, array $option = [])
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
@@ -79,6 +86,8 @@ class Connect
         $this->setConfig($config);
 
         $this->initDispatcher();
+
+        parent::__construct($option);
     }
 
     /**
@@ -114,11 +123,9 @@ class Connect
 
         unset($_SESSION['user']);
 
-        if ($this->user instanceof User) {
-            $_SESSION['user'] = $this->user->toArray();
-            $this->setRole($this->user->getCurrentRole());
-            $this->setLocalUsername($this->user->getLocalUsername());
-        }
+        $_SESSION['user'] = $this->user->toArray();
+        $this->setRole($this->user->getCurrentRole());
+        $this->setLocalUsername($this->user->getLocalUsername());
 
         return $this;
     }
@@ -265,6 +272,54 @@ class Connect
         $this->localUsername = $localUsername;
 
         return $this;
+    }
+
+    /**
+     * Create a JWT (JSON Web Token)
+     *
+     * @return Token
+     */
+    public function createToken()
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            throw new \LogicException('Unable to create token: user is not set');
+        }
+
+        return (new Tokenizer())->createToken(
+            $this->getUser(),
+            $this->getSaml()->getMetadata()->getServiceProvider()->getID(),
+            $this->getSaml()->getMetadata()->getServiceProviderPrivateKey()
+        );
+    }
+
+    /**
+     * Validate a JWT (JSON Web Token)
+     *
+     * @param string $token
+     *
+     * @return Token
+     *
+     * @throws ApiClientException
+     */
+    public function validateToken($token)
+    {
+        $request = (new RequestDescriptor())
+            ->setUrl($this->buildUrl(sprintf('/api/token/validate?token=%s', (string) $token)))
+            ->setMethod('GET');
+
+        try {
+            $token = json_decode($this->send($request)->getBody(), true)['token'];
+        } catch (ApiClientException $e) {
+            $previous = $e->getPrevious();
+            if ($previous instanceof BadResponseException) {
+                throw $previous;
+            }
+            throw $e;
+        }
+
+        return (new Tokenizer())->parseFromString($token);
     }
 
     /**
