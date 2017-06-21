@@ -159,3 +159,37 @@ keys for IDP and your Service Provider with metadata configuration directive.
 
 If the current user which the client provide with the method `Client::getUser()` is the result of a profile association,
 you could get the local username and role with respectively `Client::getLocalUsername()` and `Client::getRole()`.
+
+### Create and validate Token (JWT)
+
+With Connect client, you could create and validate JSON Web Token (JWT). JWT is a simple and secure way to transmit Connect
+user session information — User entity for instance — between service which consume Connect-Client.
+
+Create a token:
+
+```php
+// Create a Connect-Client instance...
+// You must provide Connect-IDP URL for token validation purpose
+$connect = new Connect($saml, $config, [Connect::OPTION_BASEURL => 'http://idp.dev:8080']);
+
+// Create a Token
+$token = $connect->createToken();
+
+// Use the token...
+```
+
+Validate a token:
+
+```php
+// Create a Connect-Client instance...
+// You must provide Connect-IDP URL for token validation purpose
+$connect = new Connect($saml, $config, [Connect::OPTION_BASEURL => 'http://idp.dev:8080']);
+
+// Validate a Token
+
+try {
+    $token = $connect->validateToken((string) $token);
+} catch (\Exception $e) {
+    // Handle exception
+}
+```

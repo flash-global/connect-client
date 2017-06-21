@@ -10,8 +10,15 @@ include __DIR__ . '/config.php';
 <body>
     <p>My resource !</p>
     <p><a href="/logout.php">Logout</a></p>
+
+    <?php $token = $connect->createToken(); ?>
+    <code><?= $token ?></code>
+
+    <?php
+        var_dump($connect->validateToken((string) $token));
+    ?>
+
     <?php var_dump($_SESSION) ?>
-    <?php var_dump($_SESSION['user']['attributions']) ?>
-    <?php var_dump($connect) ?>
+    <?php var_dump($connect->getUser()) ?>
 </body>
 </html>
