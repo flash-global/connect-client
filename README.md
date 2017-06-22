@@ -169,8 +169,7 @@ Create a token:
 
 ```php
 // Create a Connect-Client instance...
-// You must provide Connect-IDP URL for token validation purpose
-$connect = new Connect($saml, $config, [Connect::OPTION_BASEURL => 'http://idp.dev:8080']);
+$connect = new Connect($saml, $config);
 
 // Create a Token
 $token = $connect->createToken();
@@ -181,14 +180,14 @@ $token = $connect->createToken();
 Validate a token:
 
 ```php
-// Create a Connect-Client instance...
+// Create a TokenValidator Client instance...
 // You must provide Connect-IDP URL for token validation purpose
-$connect = new Connect($saml, $config, [Connect::OPTION_BASEURL => 'http://idp.dev:8080']);
+$validator = new TokenValidator([Connect::OPTION_BASEURL => 'http://idp.dev:8080']);
 
 // Validate a Token
 
 try {
-    $token = $connect->validateToken((string) $token);
+    $token = $validator->validate((string) $token);
 } catch (\Exception $e) {
     // Handle exception
 }

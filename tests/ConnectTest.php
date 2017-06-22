@@ -3,16 +3,11 @@
 namespace Test\Fei\Service\Connect\Client;
 
 use FastRoute\Dispatcher;
-use Fei\ApiClient\ApiClientException;
-use Fei\ApiClient\ResponseDescriptor;
-use Fei\ApiClient\Transport\BasicTransport;
 use Fei\Service\Connect\Client\Config;
 use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Metadata;
 use Fei\Service\Connect\Client\Saml;
 use Fei\Service\Connect\Common\Entity\User;
-use Fei\Service\Connect\Common\Token\Tokenizer;
-use Guzzle\Http\Exception\BadResponseException;
 use Lcobucci\JWT\Token;
 use LightSaml\Model\Metadata\AssertionConsumerService;
 use LightSaml\Model\Metadata\SingleLogoutService;
@@ -167,93 +162,5 @@ class ConnectTest extends TestCase
         $this->expectExceptionMessage('Unable to create token: user is not set');
 
         $connect->createToken();
-    }
-
-    public function testValidateToken()
-    {
-        $saml = $this->getMockBuilder(Saml::class)->disableOriginalConstructor()->getMock();
-        $config = $this->getMockBuilder(Config::class)->getMock();
-        $transport = $this->getMockBuilder(BasicTransport::class)->getMock();
-
-        $saml->expects($this->any())->method('getAcsLocation')->willReturn('/acs');
-        $saml->expects($this->any())->method('getLogoutLocation')->willReturn('/logout');
-
-        $token = (new Tokenizer())->createToken(
-            new User(),
-            'test',
-            file_get_contents(__DIR__ . '/../example/keys/sp.pem')
-        );
-
-        $transport->expects($this->once())->method('send')->willReturn(
-            (new ResponseDescriptor())
-                ->setBody(
-                    json_encode([
-                        'token' => (string) $token
-                    ])
-                )
-        );
-
-        $connect = new Connect($saml, $config);
-        $connect->setTransport($transport);
-
-        $result = $connect->validateToken((string) $token);
-
-        $this->assertEquals($result, $token);
-    }
-
-    public function testValidateTokenFailWithBadResponse()
-    {
-        $saml = $this->getMockBuilder(Saml::class)->disableOriginalConstructor()->getMock();
-        $config = $this->getMockBuilder(Config::class)->getMock();
-        $transport = $this->getMockBuilder(BasicTransport::class)->getMock();
-
-        $saml->expects($this->any())->method('getAcsLocation')->willReturn('/acs');
-        $saml->expects($this->any())->method('getLogoutLocation')->willReturn('/logout');
-
-        $token = (new Tokenizer())->createToken(
-            new User(),
-            'test',
-            file_get_contents(__DIR__ . '/../example/keys/sp.pem')
-        );
-
-        $transport->expects($this->once())->method('send')->willThrowException(
-            new ApiClientException('test', 0, new BadResponseException('test'))
-        );
-
-        $connect = new Connect($saml, $config);
-        $connect->setTransport($transport);
-
-        $this->expectException(BadResponseException::class);
-        $this->expectExceptionMessage('test');
-
-        $connect->validateToken((string) $token);
-    }
-
-    public function testValidateTokenFailWithApiException()
-    {
-        $saml = $this->getMockBuilder(Saml::class)->disableOriginalConstructor()->getMock();
-        $config = $this->getMockBuilder(Config::class)->getMock();
-        $transport = $this->getMockBuilder(BasicTransport::class)->getMock();
-
-        $saml->expects($this->any())->method('getAcsLocation')->willReturn('/acs');
-        $saml->expects($this->any())->method('getLogoutLocation')->willReturn('/logout');
-
-        $token = (new Tokenizer())->createToken(
-            new User(),
-            'test',
-            file_get_contents(__DIR__ . '/../example/keys/sp.pem')
-        );
-
-        $transport->expects($this->once())->method('send')->willThrowException(
-            new ApiClientException('test', 0, new ApiClientException('test'))
-        );
-
-        $connect = new Connect($saml, $config);
-        $connect->setTransport($transport);
-
-        $this->expectException(ApiClientException::class);
-        $this->expectExceptionMessage('test');
-
-        $connect->validateToken((string) $token);
     }
 }
