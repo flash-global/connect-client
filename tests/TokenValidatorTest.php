@@ -5,10 +5,12 @@ namespace Test\Fei\Service\Connect\Client;
 use Fei\ApiClient\ApiClientException;
 use Fei\ApiClient\ResponseDescriptor;
 use Fei\ApiClient\Transport\BasicTransport;
+use Fei\Service\Connect\Client\Exception\TokenValidationException;
 use Fei\Service\Connect\Client\TokenValidator;
 use Fei\Service\Connect\Common\Entity\User;
 use Fei\Service\Connect\Common\Token\Tokenizer;
 use Guzzle\Http\Exception\BadResponseException;
+use Guzzle\Http\Message\Response;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -55,15 +57,21 @@ class TokenValidatorTest extends TestCase
             file_get_contents(__DIR__ . '/../example/keys/sp.pem')
         );
 
+        $response = new Response('Internal Server error');
+        $response->setBody(json_encode(['error' => 'error', 'code' => 500]));
+
+        $exception = new BadResponseException('test');
+        $exception->setResponse($response);
+
         $transport->expects($this->once())->method('send')->willThrowException(
-            new ApiClientException('test', 0, new BadResponseException('test'))
+            new ApiClientException('test', 0, $exception)
         );
 
         $validator = new TokenValidator();
         $validator->setTransport($transport);
 
-        $this->expectException(BadResponseException::class);
-        $this->expectExceptionMessage('test');
+        $this->expectException(TokenValidationException::class);
+        $this->expectExceptionMessage('error');
 
         $validator->validate((string) $token);
     }
@@ -85,7 +93,7 @@ class TokenValidatorTest extends TestCase
         $validator = new TokenValidator();
         $validator->setTransport($transport);
 
-        $this->expectException(ApiClientException::class);
+        $this->expectException(TokenValidationException::class);
         $this->expectExceptionMessage('test');
 
         $validator->validate((string) $token);
