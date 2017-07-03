@@ -7,6 +7,7 @@ use Fei\Service\Connect\Client\Config;
 use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Metadata;
 use Fei\Service\Connect\Client\Saml;
+use Fei\Service\Connect\Client\Token;
 use Fei\Service\Connect\Common\ProfileAssociation\Exception\ProfileAssociationException;
 use Fei\Service\Connect\Common\ProfileAssociation\Message\ResponseMessage;
 use Fei\Service\Connect\Common\ProfileAssociation\Message\UsernamePasswordMessage;
@@ -77,8 +78,9 @@ $config = (new Config())
 
 $connect = new Connect(
     new Saml($metadata),
-    $config,
-    [Connect::OPTION_BASEURL => 'http://idp.dev:8080']
+    $config
 );
-$connect->setTransport(new BasicTransport());
 $connect->handleRequest($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'])->emit();
+
+$token = new Token([Token::OPTION_BASEURL => 'http://idp.dev:8080']);
+$token->setTransport(new BasicTransport());

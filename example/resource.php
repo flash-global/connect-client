@@ -11,11 +11,11 @@ include __DIR__ . '/config.php';
     <p>My resource !</p>
     <p><a href="/logout.php">Logout</a></p>
 
-    <?php $token = $connect->createToken(); ?>
-    <code><?= $token ?></code>
+    <?php $t = $token->create($connect); ?>
+    <code><?= htmlspecialchars($t, ENT_QUOTES|ENT_SUBSTITUTE) ?></code>
 
     <?php
-        var_dump($connect->validateToken((string) $token));
+        var_dump($token->validate($t));
     ?>
 
     <?php var_dump($_SESSION) ?>
