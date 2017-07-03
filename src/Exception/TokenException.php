@@ -7,6 +7,6 @@ namespace Fei\Service\Connect\Client\Exception;
  *
  * @package Fei\Service\Connect\Client\Exception
  */
-class TokenValidationException extends \LogicException
+class TokenException extends \LogicException
 {
 }

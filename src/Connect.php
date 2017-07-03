@@ -14,8 +14,6 @@ use Fei\Service\Connect\Common\ProfileAssociation\Message\ResponseMessageInterfa
 use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationMessageExtractor;
 use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationResponse;
 use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationServerRequestFactory;
-use Fei\Service\Connect\Common\Token\Tokenizer;
-use Lcobucci\JWT\Token;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
 
@@ -265,26 +263,6 @@ class Connect
         $this->localUsername = $localUsername;
 
         return $this;
-    }
-
-    /**
-     * Create a JWT (JSON Web Token)
-     *
-     * @return Token
-     */
-    public function createToken()
-    {
-        $user = $this->getUser();
-
-        if (!$user) {
-            throw new \LogicException('Unable to create token: user is not set');
-        }
-
-        return (new Tokenizer())->createToken(
-            $this->getUser(),
-            $this->getSaml()->getMetadata()->getServiceProvider()->getID(),
-            $this->getSaml()->getMetadata()->getServiceProviderPrivateKey()
-        );
     }
 
     /**
