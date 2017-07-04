@@ -68,7 +68,7 @@ class Token extends AbstractApiClient
         );
 
         $request = (new RequestDescriptor())
-            ->setUrl($this->buildUrl(sprintf('/api/token')))
+            ->setUrl($this->buildUrl('/api/token'))
             ->setMethod('POST');
         $request->setBodyParams(['token-request' => json_encode($tokenRequest->toArray())]);
 
