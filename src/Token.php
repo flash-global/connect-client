@@ -22,6 +22,12 @@ class Token extends AbstractApiClient
      */
     protected $tokenizer;
 
+    /** @var  string $applicationId */
+    protected $applicationId;
+
+    /** @var  string $privateKey */
+    protected $privateKey;
+
     /**
      * Get Tokenizer
      *
@@ -88,6 +94,43 @@ class Token extends AbstractApiClient
     }
 
     /**
+     * Create an application token
+     *
+     * @return string
+     */
+    public function createApplicationToken($applicationId, $privateKey)
+    {
+        $tokenRequest = $this->getTokenizer()->signTokenRequest(
+            $this->getTokenizer()->createApplicationTokenRequest(
+                $applicationId
+            ),
+            $privateKey
+        );
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->buildUrl('/api/token'))
+            ->setMethod('POST');
+        $request->setBodyParams([
+            'application' => 1,
+            'token-request' => json_encode($tokenRequest->toArray())
+        ]);
+
+        try {
+            return json_decode($this->send($request)->getBody(), true)['token'];
+        } catch (\Exception $e) {
+            $previous = $e->getPrevious();
+
+            if ($previous instanceof BadResponseException) {
+                $error = json_decode($previous->getResponse()->getBody(true), true);
+
+                throw new TokenException($error['error'], $error['code'], $previous);
+            }
+
+            throw new TokenException($e->getMessage(), $e->getCode(), $e->getPrevious());
+        }
+    }
+
+    /**
      * Validate a Token
      *
      * @param string $token
@@ -115,5 +158,51 @@ class Token extends AbstractApiClient
 
             throw new TokenException($e->getMessage(), $e->getCode(), $e->getPrevious());
         }
+    }
+
+    /**
+     * Get ApplicationId
+     *
+     * @return string
+     */
+    public function getApplicationId()
+    {
+        return $this->applicationId;
+    }
+
+    /**
+     * Set ApplicationId
+     *
+     * @param string $applicationId
+     *
+     * @return $this
+     */
+    public function setApplicationId($applicationId)
+    {
+        $this->applicationId = $applicationId;
+        return $this;
+    }
+
+    /**
+     * Get PrivateKey
+     *
+     * @return string
+     */
+    public function getPrivateKey()
+    {
+        return $this->privateKey;
+    }
+
+    /**
+     * Set PrivateKey
+     *
+     * @param string $privateKey
+     *
+     * @return $this
+     */
+    public function setPrivateKey($privateKey)
+    {
+        $this->privateKey = $privateKey;
+        return $this;
     }
 }

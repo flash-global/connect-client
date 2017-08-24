@@ -226,4 +226,22 @@ class TokenTest extends TestCase
 
         $validator->validate('token');
     }
+
+    public function testApplicationIdAccessors()
+    {
+        $token = new Token();
+        $token->setApplicationId('fake-app-id');
+
+        $this->assertEquals($token->getApplicationId(), 'fake-app-id');
+        $this->assertAttributeEquals($token->getApplicationId(), 'applicationId', $token);
+    }
+
+    public function testPrivateKeyAccessors()
+    {
+        $token = new Token();
+        $token->setPrivateKey('fake-private-key');
+
+        $this->assertEquals($token->getPrivateKey(), 'fake-private-key');
+        $this->assertAttributeEquals($token->getPrivateKey(), 'privateKey', $token);
+    }
 }
