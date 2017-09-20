@@ -544,10 +544,15 @@ class Saml
         return $context;
     }
 
+    /**
+     * Retrieves POST parameters via php://input stream
+     *
+     * @return array
+     */
     protected function retrievePostWithInputStream()
     {
         parse_str(file_get_contents('php://input'), $response);
 
-        return $response ?? [];
+        return $response ? $response : [];
     }
 }
