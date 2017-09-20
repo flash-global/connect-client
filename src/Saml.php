@@ -526,6 +526,10 @@ class Saml
      */
     protected function receiveMessage()
     {
+        if (empty($_POST)) {
+            $_POST = $this->retrievePostWithInputStream();
+        }
+
         $request = Request::createFromGlobals();
 
         try {
@@ -538,5 +542,12 @@ class Saml
         $binding->receive($request, $context);
 
         return $context;
+    }
+
+    protected function retrievePostWithInputStream()
+    {
+        parse_str(file_get_contents('php://input'), $response);
+
+        return $response ?? [];
     }
 }
