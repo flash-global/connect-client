@@ -88,11 +88,50 @@ class Token extends AbstractApiClient
     }
 
     /**
+     * Create an application token
+     *
+     * @param string          $application
+     * @param resource|string $privateKey
+     *
+     * @return string
+     */
+    public function createApplicationToken($application, $privateKey)
+    {
+        $tokenRequest = $this->getTokenizer()->signTokenRequest(
+            $this->getTokenizer()->createApplicationTokenRequest(
+                $application
+            ),
+            $privateKey
+        );
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->buildUrl('/api/token'))
+            ->setMethod('POST');
+        $request->setBodyParams([
+            'token-request' => json_encode($tokenRequest->toArray())
+        ]);
+
+        try {
+            return json_decode($this->send($request)->getBody(), true)['token'];
+        } catch (\Exception $e) {
+            $previous = $e->getPrevious();
+
+            if ($previous instanceof BadResponseException) {
+                $error = json_decode($previous->getResponse()->getBody(true), true);
+
+                throw new TokenException($error['error'], $error['code'], $previous);
+            }
+
+            throw new TokenException($e->getMessage(), $e->getCode(), $e->getPrevious());
+        }
+    }
+
+    /**
      * Validate a Token
      *
      * @param string $token
      *
-     * @return User
+     * @return User|bool
      *
      * @throws ApiClientException
      */
@@ -103,7 +142,13 @@ class Token extends AbstractApiClient
             ->setMethod('GET');
 
         try {
-            return new User(json_decode($this->send($request)->getBody(), true));
+            $body = json_decode($this->send($request)->getBody(), true);
+
+            if (is_array($body)) {
+                return new User($body);
+            }
+
+            return $body;
         } catch (ApiClientException $e) {
             $previous = $e->getPrevious();
 

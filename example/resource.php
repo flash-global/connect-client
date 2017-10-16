@@ -18,6 +18,16 @@ include __DIR__ . '/config.php';
         var_dump($token->validate($t));
     ?>
 
+    <?php $t = $token->createApplicationToken(
+        $connect->getSaml()->getMetadata()->getServiceProvider()->getID(),
+        $connect->getSaml()->getMetadata()->getServiceProviderPrivateKey()
+    ); ?>
+    <code><?= htmlspecialchars($t, ENT_QUOTES|ENT_SUBSTITUTE) ?></code>
+
+    <?php
+    var_dump($token->validate($t));
+    ?>
+
     <?php var_dump($_SESSION) ?>
     <?php var_dump($connect->getUser()) ?>
 </body>
