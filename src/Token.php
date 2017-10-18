@@ -6,9 +6,11 @@ use Fei\ApiClient\AbstractApiClient;
 use Fei\ApiClient\ApiClientException;
 use Fei\ApiClient\RequestDescriptor;
 use Fei\Service\Connect\Client\Exception\TokenException;
+use Fei\Service\Connect\Common\Entity\Application;
 use Fei\Service\Connect\Common\Entity\User;
 use Fei\Service\Connect\Common\Token\Tokenizer;
 use Guzzle\Http\Exception\BadResponseException;
+use Psr\SimpleCache\CacheInterface;
 
 /**
  * Class Token
@@ -21,6 +23,11 @@ class Token extends AbstractApiClient
      * @var Tokenizer
      */
     protected $tokenizer;
+
+    /**
+     * @var CacheInterface
+     */
+    protected $cache;
 
     /**
      * Get Tokenizer
@@ -51,6 +58,40 @@ class Token extends AbstractApiClient
     }
 
     /**
+     * Get Cache
+     *
+     * @return CacheInterface
+     */
+    public function getCache()
+    {
+        return $this->cache;
+    }
+
+    /**
+     * Set Cache
+     *
+     * @param CacheInterface $cache
+     *
+     * @return $this
+     */
+    public function setCache($cache)
+    {
+        $this->cache = $cache;
+
+        return $this;
+    }
+
+    /**
+     * Tells if cache is set
+     *
+     * @return bool
+     */
+    public function hasCache()
+    {
+        return $this->getCache() instanceof CacheInterface;
+    }
+
+    /**
      * Create a Token
      *
      * @param Connect $connect
@@ -73,7 +114,7 @@ class Token extends AbstractApiClient
         $request->setBodyParams(['token-request' => json_encode($tokenRequest->toArray())]);
 
         try {
-            return json_decode($this->send($request)->getBody(), true)['token'];
+            return json_decode($this->send($request)->getBody(), true);
         } catch (\Exception $e) {
             $previous = $e->getPrevious();
 
@@ -112,7 +153,7 @@ class Token extends AbstractApiClient
         ]);
 
         try {
-            return json_decode($this->send($request)->getBody(), true)['token'];
+            return json_decode($this->send($request)->getBody(), true);
         } catch (\Exception $e) {
             $previous = $e->getPrevious();
 
@@ -131,12 +172,27 @@ class Token extends AbstractApiClient
      *
      * @param string $token
      *
-     * @return User|bool
+     * @return array
      *
      * @throws ApiClientException
      */
     public function validate($token)
     {
+        if ($this->hasCache()) {
+            $body = $this->getCache()->get($token);
+
+            // Check if token is expired
+            if (!is_null($body)) {
+                $body = json_decode($body, true);
+                if (new \DateTime($body['expire_at']) >= new \DateTime()) {
+                    return $this->buildValidationReturn($body);
+                } else {
+                    $this->getCache()->delete($token);
+                    throw new TokenException('The provided token is expired');
+                }
+            }
+        }
+
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(sprintf('/api/token/validate?token=%s', (string) $token)))
             ->setMethod('GET');
@@ -144,11 +200,15 @@ class Token extends AbstractApiClient
         try {
             $body = json_decode($this->send($request)->getBody(), true);
 
-            if (is_array($body)) {
-                return new User($body);
+            if ($this->hasCache()) {
+                $this->getCache()->set(
+                    $token,
+                    json_encode($body),
+                    (new \DateTime())->diff(new \DateTime($body['expire_at']))
+                );
             }
 
-            return $body;
+            return $this->buildValidationReturn($body);
         } catch (ApiClientException $e) {
             $previous = $e->getPrevious();
 
@@ -160,5 +220,24 @@ class Token extends AbstractApiClient
 
             throw new TokenException($e->getMessage(), $e->getCode(), $e->getPrevious());
         }
+    }
+
+    /**
+     * Build the validation return
+     *
+     * @param array $body
+     *
+     * @return array
+     */
+    protected function buildValidationReturn(array $body)
+    {
+        if (isset($body['user'])) {
+            $body['user'] = new User($body['user']);
+        }
+
+        $body['application'] = new Application($body['application']);
+        $body['expire_at'] = new \DateTime($body['expire_at']);
+
+        return $body;
     }
 }
