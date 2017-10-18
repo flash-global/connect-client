@@ -82,22 +82,4 @@ class ConfigTest extends TestCase
 
         $this->assertTrue($config->hasProfileAssociationCallback());
     }
-
-    public function testProfileAssociationCallbackAccessorsWithBadParameterMethod()
-    {
-        $config = new Config();
-
-        $callback = function ($message) {
-        };
-
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage(
-            sprintf(
-                'First parameter of the profile association callback must be a type of %s',
-                RequestMessageInterface::class
-            )
-        );
-
-        $config->registerProfileAssociation($callback);
-    }
 }
