@@ -12,11 +12,17 @@ include __DIR__ . '/config.php';
     <p><a href="/logout.php">Logout</a></p>
 
     <?php $t = $token->create($connect); ?>
-    <code><?= htmlspecialchars($t, ENT_QUOTES|ENT_SUBSTITUTE) ?></code>
+    <code><?php var_dump($t) ?></code>
 
-    <?php
-        var_dump($token->validate($t));
-    ?>
+    <?php var_dump($token->validate($t['token'])); ?>
+
+    <?php $t = $token->createApplicationToken(
+        $connect->getSaml()->getMetadata()->getServiceProvider()->getID(),
+        $connect->getSaml()->getMetadata()->getServiceProviderPrivateKey()
+    ); ?>
+    <code><?php echo var_dump($t) ?></code>
+
+    <?php var_dump($token->validate($t['token'])); ?>
 
     <?php var_dump($_SESSION) ?>
     <?php var_dump($connect->getUser()) ?>

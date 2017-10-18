@@ -11,6 +11,7 @@ use Fei\Service\Connect\Client\Exception\TokenException;
 use Fei\Service\Connect\Client\Metadata;
 use Fei\Service\Connect\Client\Saml;
 use Fei\Service\Connect\Client\Token;
+use Fei\Service\Connect\Common\Entity\Application;
 use Fei\Service\Connect\Common\Entity\User;
 use Fei\Service\Connect\Common\Token\Tokenizer;
 use Guzzle\Http\Exception\BadResponseException;
@@ -20,6 +21,7 @@ use LightSaml\Model\Metadata\SingleLogoutService;
 use LightSaml\Model\Metadata\SpSsoDescriptor;
 use LightSaml\SamlConstants;
 use PHPUnit\Framework\TestCase;
+use Psr\SimpleCache\CacheInterface;
 
 /**
  * Class TokenValidatorTest
@@ -79,7 +81,7 @@ class TokenTest extends TestCase
 
         $result = $token->create($connect);
 
-        $this->assertEquals('token', $result);
+        $this->assertEquals(['token' => 'token'], $result);
     }
 
     public function testCreateTokenFailWithBadResponse()
@@ -168,13 +170,17 @@ class TokenTest extends TestCase
     {
         $transport = $this->getMockBuilder(BasicTransport::class)->getMock();
 
+        $now = new \DateTime();
+
         $transport->expects($this->once())->method('send')->willReturn(
             (new ResponseDescriptor())
                 ->setBody(
                     json_encode(
-                        (new User())
-                            ->setUserName('test')
-                            ->toArray()
+                        [
+                            'expire_at' => $now->format(\DateTime::ISO8601),
+                            'application' => (new Application())->toArray()
+                        ]
+
                     )
                 )
         );
@@ -184,7 +190,10 @@ class TokenTest extends TestCase
 
         $result = $validator->validate('token');
 
-        $this->assertEquals((new User())->setUserName('test'), $result);
+        $this->assertEquals([
+            'expire_at' => $now,
+            'application' => new Application()
+        ], $result);
     }
 
     public function testValidateTokenFailWithBadResponse()
@@ -225,5 +234,107 @@ class TokenTest extends TestCase
         $this->expectExceptionMessage('test');
 
         $validator->validate('token');
+    }
+
+    public function testCacheAccessors()
+    {
+        $token = new Token();
+
+        $cache = $this->getMockBuilder(CacheInterface::class)->getMock();
+
+        $token->setCache($cache);
+
+        $this->assertEquals($cache, $token->getCache());
+        $this->assertAttributeEquals($token->getCache(), 'cache', $token);
+    }
+
+    public function testValidationHitCache()
+    {
+        $token = new Token();
+
+        $expire = new \DateTime('+ 1 min');
+
+        $cache = $this->getMockBuilder(CacheInterface::class)->getMock();
+        $cache->expects($this->once())->method('get')->with('token')->willReturn(json_encode([
+            'expire_at' => $expire->format(\DateTime::ISO8601),
+            'application' => (new Application())->toArray()
+        ]));
+
+        $token->setCache($cache);
+
+        $this->assertEquals(
+            [
+                'expire_at' => $expire,
+                'application' => new Application()
+            ],
+            $token->validate('token')
+        );
+    }
+
+    public function testValidationHitCacheWithExpiredToken()
+    {
+        $token = new Token();
+
+        $expire = new \DateTime('- 1 min');
+
+        $cache = $this->getMockBuilder(CacheInterface::class)->getMock();
+        $cache->expects($this->once())->method('get')->with('token')->willReturn(json_encode([
+            'expire_at' => $expire->format(\DateTime::ISO8601),
+            'application' => (new Application())->toArray()
+        ]));
+        $cache->expects($this->once())->method('delete')->with('token')->willReturn(true);
+
+        $token->setCache($cache);
+
+        $this->expectException(TokenException::class);
+        $this->expectExceptionMessage('The provided token is expired');
+
+        $token->validate('token');
+    }
+
+    public function testValidationDoesntHitCache()
+    {
+        $token = new Token();
+
+        $expire = new \DateTime('+ 1 min');
+
+        $cache = $this->getMockBuilder(CacheInterface::class)->getMock();
+        $cache->expects($this->once())->method('get')->with('token')->willReturn(null);
+        $cache->expects($this->once())->method('set')->with(
+            'token',
+            json_encode(
+                [
+                    'expire_at' => $expire->format(\DateTime::ISO8601),
+                    'application' => (new Application())->toArray(),
+                    'user' => (new User())->toArray()
+                ]
+
+            )
+        )->willReturn(true);
+
+        $transport = $this->getMockBuilder(BasicTransport::class)->getMock();
+
+        $transport->expects($this->once())->method('send')->willReturn(
+            (new ResponseDescriptor())
+                ->setBody(
+                    json_encode(
+                        [
+                            'expire_at' => $expire->format(\DateTime::ISO8601),
+                            'application' => (new Application())->toArray(),
+                            'user' => (new User())->toArray()
+                        ]
+
+                    )
+                )
+        );
+
+        $token->setCache($cache);
+        $token->setTransport($transport);
+
+        $this->assertEquals([
+            'expire_at' => $expire,
+            'application' => new Application(),
+            'user' => new User()
+        ], $token->validate('token'));
     }
 }

@@ -3,6 +3,7 @@
 include __DIR__ . '/../vendor/autoload.php';
 
 use Fei\ApiClient\Transport\BasicTransport;
+use Fei\Service\Connect\Client\Cache\Adapter\ZendCacheAdapter;
 use Fei\Service\Connect\Client\Config;
 use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Metadata;
@@ -19,6 +20,7 @@ use LightSaml\Model\Metadata\SingleLogoutService;
 use LightSaml\Model\Metadata\SingleSignOnService;
 use LightSaml\Model\Metadata\SpSsoDescriptor;
 use LightSaml\SamlConstants;
+use Zend\Cache\StorageFactory;
 
 $metadata = new Metadata();
 $metadata
@@ -84,3 +86,8 @@ $connect->handleRequest($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD'])->em
 
 $token = new Token([Token::OPTION_BASEURL => 'http://idp.dev:8080']);
 $token->setTransport(new BasicTransport());
+$token->setCache(new ZendCacheAdapter(StorageFactory::factory(
+    [
+        'adapter' => 'filesystem'
+    ]
+)));
