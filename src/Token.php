@@ -103,9 +103,9 @@ class Token extends AbstractApiClient
         $tokenRequest = $this->getTokenizer()->signTokenRequest(
             $this->getTokenizer()->createTokenRequest(
                 $connect->getUser(),
-                $connect->getSaml()->getMetadata()->getServiceProvider()->getID()
+                $connect->getSaml()->getMetadata()->getServiceProvider()->getEntityID()
             ),
-            $connect->getSaml()->getMetadata()->getServiceProviderPrivateKey()
+            $connect->getSaml()->getPrivateKey()
         );
 
         $request = (new RequestDescriptor())

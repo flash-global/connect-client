@@ -11,7 +11,7 @@ use LightSaml\Context\Profile\MessageContext;
 use LightSaml\Credential\KeyHelper;
 use LightSaml\Helper;
 use LightSaml\Model\Assertion\Assertion;
-use LightSaml\Model\Assertion\EncryptedElement;
+use LightSaml\Model\Assertion\EncryptedAssertionReader;
 use LightSaml\Model\Assertion\Issuer;
 use LightSaml\Model\Assertion\NameID;
 use LightSaml\Model\Context\DeserializationContext;
@@ -45,13 +45,20 @@ class Saml
     protected $metadata;
 
     /**
+     * @var string
+     */
+    protected $privateKey;
+
+    /**
      * Saml constructor.
      *
      * @param Metadata $metadata
+     * @param string   $privateKey
      */
-    public function __construct(Metadata $metadata)
+    public function __construct(Metadata $metadata, $privateKey)
     {
         $this->setMetadata($metadata);
+        $this->setPrivateKey($privateKey);
     }
 
     /**
@@ -74,6 +81,30 @@ class Saml
     public function setMetadata($metadata)
     {
         $this->metadata = $metadata;
+
+        return $this;
+    }
+
+    /**
+     * Get PrivateKey
+     *
+     * @return string
+     */
+    public function getPrivateKey()
+    {
+        return $this->privateKey;
+    }
+
+    /**
+     * Set PrivateKey
+     *
+     * @param string $privateKey
+     *
+     * @return $this
+     */
+    public function setPrivateKey($privateKey)
+    {
+        $this->privateKey = $privateKey;
 
         return $this;
     }
@@ -147,17 +178,17 @@ class Saml
             ->setID(Helper::generateID())
             ->setIssueInstant(new \DateTime())
             ->setDestination($this->getMetadata()->getFirstSso()->getLocation())
-            ->setIssuer(new Issuer($this->getMetadata()->getServiceProvider()->getID()))
+            ->setIssuer(new Issuer($this->getMetadata()->getServiceProvider()->getEntityID()))
             ->setRelayState(Helper::generateID());
 
-        if ($this->getMetadata()->getIdentityProvider()->getWantAuthnRequestsSigned()) {
+        if ($this->getMetadata()->getFirstIdpSsoDescriptor()->getWantAuthnRequestsSigned()) {
             $authnRequest->setSignature(
                 new SignatureWriter(
                     $this->getMetadata()
-                        ->getServiceProvider()
+                        ->getFirstSpSsoDescriptor()
                         ->getFirstKeyDescriptor(KeyDescriptor::USE_SIGNING)
                         ->getCertificate(),
-                    KeyHelper::createPrivateKey($this->getMetadata()->getServiceProviderPrivateKey(), '')
+                    KeyHelper::createPrivateKey($this->getPrivateKey(), '')
                 )
             );
         }
@@ -176,7 +207,7 @@ class Saml
             ->setStatus(new Status(new StatusCode(SamlConstants::STATUS_SUCCESS)))
             ->setID(Helper::generateID())
             ->setVersion(SamlConstants::VERSION_20)
-            ->setIssuer(new Issuer($this->getMetadata()->getServiceProvider()->getID()))
+            ->setIssuer(new Issuer($this->getMetadata()->getServiceProvider()->getEntityID()))
             ->setIssueInstant(new \DateTime());
     }
 
@@ -191,7 +222,7 @@ class Saml
     {
         $response = $this->createLogoutResponse();
 
-        $idp = $this->getMetadata()->getIdentityProvider();
+        $idp = $this->getMetadata()->getFirstIdpSsoDescriptor();
 
         $location = $idp->getFirstSingleLogoutService()->getResponseLocation()
             ? $idp->getFirstSingleLogoutService()->getResponseLocation()
@@ -216,7 +247,7 @@ class Saml
             ->setID(Helper::generateID())
             ->setVersion(SamlConstants::VERSION_20)
             ->setIssueInstant(new \DateTime())
-            ->setIssuer(new Issuer($this->getMetadata()->getServiceProvider()->getID()));
+            ->setIssuer(new Issuer($this->getMetadata()->getServiceProvider()->getEntityID()));
     }
 
     /**
@@ -238,7 +269,7 @@ class Saml
         );
 
         $request->setDestination(
-            $this->getMetadata()->getIdentityProvider()->getFirstSingleLogoutService()->getLocation()
+            $this->getMetadata()->getFirstIdpSsoDescriptor()->getFirstSingleLogoutService()->getLocation()
         );
 
         $request->setRelayState(Helper::generateID());
@@ -301,10 +332,10 @@ class Saml
         return $message->setSignature(
             new SignatureWriter(
                 $this->getMetadata()
-                    ->getServiceProvider()
+                    ->getFirstSpSsoDescriptor()
                     ->getFirstKeyDescriptor(KeyDescriptor::USE_SIGNING)
                     ->getCertificate(),
-                KeyHelper::createPrivateKey($this->getMetadata()->getServiceProviderPrivateKey(), '')
+                KeyHelper::createPrivateKey($this->getPrivateKey(), '')
             )
         );
     }
@@ -354,7 +385,7 @@ class Saml
      */
     public function validateIssuer(SamlMessage $message)
     {
-        if ($this->getMetadata()->getIdentityProvider()->getID() != $message->getIssuer()->getValue()) {
+        if ($this->getMetadata()->getIdentityProvider()->getEntityID() != $message->getIssuer()->getValue()) {
             throw new SamlException('urn:oasis:names:tc:SAML:2.0:status:RequestDenied');
         }
     }
@@ -368,7 +399,7 @@ class Saml
      */
     public function validateDestination(Response $response)
     {
-        if ($this->getMetadata()->getServiceProvider()->getFirstAssertionConsumerService()->getLocation()
+        if ($this->getMetadata()->getFirstSpSsoDescriptor()->getFirstAssertionConsumerService()->getLocation()
             != $response->getDestination()
         ) {
             throw new SamlException('urn:oasis:names:tc:SAML:2.0:status:RequestDenied');
@@ -415,12 +446,13 @@ class Saml
     {
         $this->validateIssuer($response);
         $this->validateDestination($response);
+
         if ($relayState) {
             $this->validateRelayState($response, $relayState);
         }
 
         $public = KeyHelper::createPublicKey(
-            $this->getMetadata()->getIdentityProvider()
+            $this->getMetadata()->getFirstIdpSsoDescriptor()
                 ->getFirstKeyDescriptor(KeyDescriptor::USE_SIGNING)
                 ->getCertificate()
         );
@@ -430,8 +462,8 @@ class Saml
         }
 
         if ($response->getAllEncryptedAssertions()) {
-            $private = KeyHelper::createPrivateKey($this->getMetadata()->getServiceProviderPrivateKey(), null);
-            /** @var EncryptedElement $encryptedAssertion */
+            $private = KeyHelper::createPrivateKey($this->getPrivateKey(), null);
+            /** @var EncryptedAssertionReader $encryptedAssertion */
             foreach ($response->getAllEncryptedAssertions() as $encryptedAssertion) {
                 $assertion = $encryptedAssertion->decryptAssertion($private, new DeserializationContext());
 
@@ -459,7 +491,7 @@ class Saml
             $this->validateSignature(
                 $request,
                 KeyHelper::createPublicKey(
-                    $this->getMetadata()->getIdentityProvider()
+                    $this->getMetadata()->getFirstIdpSsoDescriptor()
                         ->getFirstKeyDescriptor(KeyDescriptor::USE_SIGNING)
                         ->getCertificate()
                 )
@@ -480,7 +512,7 @@ class Saml
             $this->validateSignature(
                 $response,
                 KeyHelper::createPublicKey(
-                    $this->getMetadata()->getIdentityProvider()
+                    $this->getMetadata()->getFirstIdpSsoDescriptor()
                         ->getFirstKeyDescriptor(KeyDescriptor::USE_SIGNING)
                         ->getCertificate()
                 )

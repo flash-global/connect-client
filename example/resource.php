@@ -17,8 +17,8 @@ include __DIR__ . '/config.php';
     <?php var_dump($token->validate($t['token'])); ?>
 
     <?php $t = $token->createApplicationToken(
-        $connect->getSaml()->getMetadata()->getServiceProvider()->getID(),
-        $connect->getSaml()->getMetadata()->getServiceProviderPrivateKey()
+        $connect->getSaml()->getMetadata()->getServiceProvider()->getEntityID(),
+        $connect->getSaml()->getPrivateKey()
     ); ?>
     <code><?php echo var_dump($t) ?></code>
 
