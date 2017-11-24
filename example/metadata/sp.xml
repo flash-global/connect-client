@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="http://translate.dev:8084" ID="1"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="urn:oasis:names:tc:SAML:2.0:metadata">
+    <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol" AuthnRequestsSigned="true"
+                     WantAssertionsSigned="true">
+        <KeyDescriptor use="signing">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                <ds:X509Data>
+                    <ds:X509Certificate>
+                        MIICKTCCAZKgAwIBAgIUcnL6u3RWIOdSUcH7sjZ7lSx+vUowDQYJKoZIhvcNAQEFBQAwUTEMMAoGA1UECgwDRkVJMRUwEwYDVQQDDAxmbGFzaC5nbG9iYWwxCzAJBgNVBAsMAklUMRAwDgYDVQQHDAdDb250ZXJuMQswCQYDVQQGDAJMVTAeFw0xNzExMTYxNTM2NDFaFw0xOTExMTYxNTM2NDFaMFExDDAKBgNVBAoMA0ZFSTEVMBMGA1UEAwwMZmxhc2guZ2xvYmFsMQswCQYDVQQLDAJJVDEQMA4GA1UEBwwHQ29udGVybjELMAkGA1UEBgwCTFUwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBANlJK1XRLD2VkE0EQYIS4Je2jKp2H4M5Qhg8/nsKMEN89i0F3YEGH+Z1uG9PVxF1sAxJs8iutHjxaWzePmrq4RoChXju3sxT9+f/+TeQaq+mrnahHL5Ows2U46B09B5By2I/fdYP+HOSXg46zInz0CpVQUygX0npy5YtqUrEwmxFAgMBAAEwDQYJKoZIhvcNAQEFBQADgYEAvEI+BFKz5njdGrKKQTTXYHLcgG3yxsP1cVQFmxR7wnWJS1aHitlLjuFoVQqLThNG8PbGteMccMDbl0c3/DoTakceFR4mCq2zMSbfAUOQ3vZ9FOFNW5Z8JzfaPtItgkSBNbX671Oay8lBKwMt1QpRmrTdSvIFtSHQpV6vernBb3I=
+                    </ds:X509Certificate>
+                </ds:X509Data>
+            </ds:KeyInfo>
+        </KeyDescriptor>
+        <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                             Location="http://translate.dev:8084/logout.php"/>
+        <AssertionConsumerService index="0" isDefault="false" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                                  Location="http://translate.dev:8084/acs.php"/>
+    </SPSSODescriptor>
+</EntityDescriptor>

@@ -1,7 +1,8 @@
 <?php
 
-namespace Fei\Service\Connect\Client;
+namespace Fei\Service\Connect\Client\Handler;
 
+use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Exception\SamlException;
 use Zend\Diactoros\Response\RedirectResponse;
 
