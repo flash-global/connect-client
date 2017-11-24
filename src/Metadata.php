@@ -2,8 +2,8 @@
 
 namespace Fei\Service\Connect\Client;
 
-use LightSaml\Model\Metadata\IdpSsoDescriptor;
-use LightSaml\Model\Metadata\SpSsoDescriptor;
+use LightSaml\Model\Context\DeserializationContext;
+use LightSaml\Model\Metadata\EntityDescriptor;
 
 /**
  * Class Metadata
@@ -13,38 +13,54 @@ use LightSaml\Model\Metadata\SpSsoDescriptor;
 class Metadata
 {
     /**
-     * @var IdpSsoDescriptor
+     * @var EntityDescriptor
      */
     protected $identityProvider;
 
     /**
-     * @var SpSsoDescriptor
+     * @var EntityDescriptor
      */
     protected $serviceProvider;
 
     /**
-     * @var string
+     * Create an instance of Metadata
+     *
+     * @param string $idpMetadataFilePath
+     * @param string $spMetadataFilePath
+     *
+     * @return Metadata
      */
-    protected $serviceProviderPrivateKey;
+    public static function load($idpMetadataFilePath, $spMetadataFilePath)
+    {
+        $metadata = (new static());
+
+        return $metadata
+            ->setIdentityProvider($metadata->createEntityDescriptor(file_get_contents($idpMetadataFilePath)))
+            ->setServiceProvider($metadata->createEntityDescriptor(file_get_contents($spMetadataFilePath)));
+    }
 
     /**
      * Get Identity Provider descriptor
      *
-     * @return IdpSsoDescriptor
+     * @return EntityDescriptor
      */
     public function getIdentityProvider()
     {
+        if (is_null($this->identityProvider)) {
+            $this->identityProvider = new EntityDescriptor();
+        }
+
         return $this->identityProvider;
     }
 
     /**
      * Set Identity Provider descriptor
      *
-     * @param IdpSsoDescriptor $identityProvider
+     * @param EntityDescriptor $identityProvider
      *
      * @return $this
      */
-    public function setIdentityProvider(IdpSsoDescriptor $identityProvider)
+    public function setIdentityProvider(EntityDescriptor $identityProvider)
     {
         $this->identityProvider = $identityProvider;
 
@@ -54,51 +70,43 @@ class Metadata
     /**
      * Get Service Provider descriptor
      *
-     * @return SpSsoDescriptor
+     * @return EntityDescriptor
      */
     public function getServiceProvider()
     {
+        if (is_null($this->serviceProvider)) {
+            $this->serviceProvider = new EntityDescriptor();
+        }
+
         return $this->serviceProvider;
     }
 
     /**
      * Set Service Provider descriptor
      *
-     * @param SpSsoDescriptor $serviceProvider
-     * @param string          $privateKey
+     * @param EntityDescriptor $serviceProvider
      *
      * @return $this
      */
-    public function setServiceProvider(SpSsoDescriptor $serviceProvider, $privateKey)
+    public function setServiceProvider(EntityDescriptor $serviceProvider)
     {
         $this->serviceProvider = $serviceProvider;
-        $this->serviceProviderPrivateKey = $privateKey;
 
         return $this;
     }
 
     /**
-     * Get the Service Provider private key
+     * Returns the first Identity Provider Descriptor
      *
-     * @return string
+     * @return \LightSaml\Model\Metadata\IdpSsoDescriptor|null
      */
-    public function getServiceProviderPrivateKey()
+    public function getFirstIdpSsoDescriptor()
     {
-        return $this->serviceProviderPrivateKey;
-    }
+        if (empty($this->getIdentityProvider()->getAllIdpSsoDescriptors())) {
+            throw new \LogicException('A Identity Provider descriptor must be registered');
+        }
 
-    /**
-     * Set the Service Provider private key
-     *
-     * @param string $serviceProviderPrivateKey
-     *
-     * @return $this
-     */
-    public function setServiceProviderPrivateKey($serviceProviderPrivateKey)
-    {
-        $this->serviceProviderPrivateKey = $serviceProviderPrivateKey;
-
-        return $this;
+        return $this->getIdentityProvider()->getFirstIdpSsoDescriptor();
     }
 
     /**
@@ -108,11 +116,25 @@ class Metadata
      */
     public function getFirstSso()
     {
-        if (!$this->getIdentityProvider()->getFirstSingleSignOnService()) {
-            throw new \LogicException('The Identity Provider must have one SSO registered');
+        if (empty($this->getFirstIdpSsoDescriptor()->getAllSingleSignOnServices())) {
+            throw new \LogicException('The Identity Provider descriptor must have one SSO registered');
         }
 
-        return $this->getIdentityProvider()->getFirstSingleSignOnService();
+        return $this->getFirstIdpSsoDescriptor()->getFirstSingleSignOnService();
+    }
+
+    /**
+     * Returns the first Service Provider Descriptor
+     *
+     * @return \LightSaml\Model\Metadata\SpSsoDescriptor|null
+     */
+    public function getFirstSpSsoDescriptor()
+    {
+        if (empty($this->getServiceProvider()->getAllSpSsoDescriptors())) {
+            throw new \LogicException('A Service Provider descriptor must be registered');
+        }
+
+        return $this->getServiceProvider()->getFirstSpSsoDescriptor();
     }
 
     /**
@@ -122,11 +144,11 @@ class Metadata
      */
     public function getFirstAcs()
     {
-        if (!$this->getServiceProvider()->getFirstAssertionConsumerService()) {
-            throw new \LogicException('The Service Provider must have one ACS registered');
+        if (empty($this->getFirstSpSsoDescriptor()->getAllAssertionConsumerServices())) {
+            throw new \LogicException('The Service Provider must have one ACS service registered');
         }
 
-        return $this->getServiceProvider()->getFirstAssertionConsumerService();
+        return $this->getFirstSpSsoDescriptor()->getFirstAssertionConsumerService();
     }
 
     /**
@@ -136,10 +158,28 @@ class Metadata
      */
     public function getFirstLogout()
     {
-        if (!$this->getServiceProvider()->getFirstSingleLogoutService()) {
+        if (empty($this->getFirstSpSsoDescriptor()->getAllSingleLogoutServices())) {
             throw new \LogicException('The Service Provider must have one Logout service registered');
         }
 
-        return $this->getServiceProvider()->getFirstSingleLogoutService();
+        return $this->getFirstSpSsoDescriptor()->getFirstSingleLogoutService();
+    }
+
+    /**
+     * Create an EntityDescriptor instance with its XML metadata contents
+     *
+     * @param string $xml
+     *
+     * @return EntityDescriptor
+     */
+    public function createEntityDescriptor($xml)
+    {
+        $deserializationContext = new DeserializationContext();
+        $deserializationContext->getDocument()->loadXML($xml);
+
+        $ed = new EntityDescriptor();
+        $ed->deserialize($deserializationContext->getDocument(), $deserializationContext);
+
+        return $ed;
     }
 }

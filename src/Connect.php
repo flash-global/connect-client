@@ -4,16 +4,16 @@ namespace Fei\Service\Connect\Client;
 
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
+use Fei\Service\Connect\Client\Config\Config;
+use Fei\Service\Connect\Client\Config\ConfigConsistency;
+use Fei\Service\Connect\Client\Handler\DeleteAdminHandler;
+use Fei\Service\Connect\Client\Handler\PingAdminHandler;
+use Fei\Service\Connect\Client\Handler\ProfileAssociationHandler;
+use Fei\Service\Connect\Client\Handler\RegisterAdminHandler;
+use Fei\Service\Connect\Client\Handler\SamlLogoutHandler;
+use Fei\Service\Connect\Client\Handler\SamlResponseHandler;
 use Fei\Service\Connect\Common\Entity\User;
 use Fei\Service\Connect\Common\Exception\ResponseExceptionInterface;
-use Fei\Service\Connect\Common\ProfileAssociation\Exception\ProfileAssociationException;
-use Fei\Service\Connect\Common\ProfileAssociation\Message\Extractor\MessageExtractor;
-use Fei\Service\Connect\Common\ProfileAssociation\Message\Hydrator\MessageHydrator;
-use Fei\Service\Connect\Common\ProfileAssociation\Message\RequestMessageInterface;
-use Fei\Service\Connect\Common\ProfileAssociation\Message\ResponseMessageInterface;
-use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationMessageExtractor;
-use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationResponse;
-use Fei\Service\Connect\Common\ProfileAssociation\ProfileAssociationServerRequestFactory;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
 
@@ -60,12 +60,16 @@ class Connect
     protected $localUsername;
 
     /**
+     * @var bool
+     */
+    protected $isConfigConsistent = false;
+
+    /**
      * Connect constructor.
      *
-     * @param Saml   $saml
      * @param Config $config
      */
-    public function __construct(Saml $saml, Config $config)
+    public function __construct(Config $config)
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             session_start();
@@ -75,10 +79,38 @@ class Connect
             $this->setUser(new User($_SESSION['user']));
         }
 
-        $this->setSaml($saml);
         $this->setConfig($config);
 
+        $this->init();
+
         $this->initDispatcher();
+    }
+
+    /**
+     * Delegate constructor
+     */
+    public function init()
+    {
+        if ($this->isConfigConsistent()) {
+            $this->setSaml(new Saml(
+                Metadata::load(
+                    $this->getConfig()->getSamlMetadataBaseDir() . '/' .$this->getConfig()->getIdpMetadataFile(),
+                    $this->getConfig()->getSamlMetadataBaseDir() . '/' .$this->getConfig()->getSpMetadataFile()
+                ),
+                $this->getConfig()->getPrivateKey()
+            ));
+        } else {
+            $metadata = new Metadata();
+            $metadata->setIdentityProvider(
+                $metadata->createEntityDescriptor(
+                    file_get_contents(
+                        $this->getConfig()->getSamlMetadataBaseDir() . '/' .$this->getConfig()->getIdpMetadataFile()
+                    )
+                )
+            );
+
+            $this->setSaml(new Saml($metadata, $this->getConfig()->getPrivateKey()));
+        }
     }
 
     /**
@@ -146,6 +178,26 @@ class Connect
     }
 
     /**
+     * Returns if config is consistent
+     *
+     * @return bool
+     */
+    public function isConfigConsistent()
+    {
+        return $this->isConfigConsistent;
+    }
+
+    /**
+     * @param bool $isConfigConsistent
+     * @return Connect
+     */
+    public function setIsConfigConsistent($isConfigConsistent)
+    {
+        $this->isConfigConsistent = $isConfigConsistent;
+        return $this;
+    }
+
+    /**
      * Get Config
      *
      * @return Config
@@ -164,6 +216,8 @@ class Connect
      */
     public function setConfig(Config $config)
     {
+        $this->checkConfigConsistency($config);
+
         $this->config = $config;
 
         return $this;
@@ -277,6 +331,10 @@ class Connect
      */
     public function handleRequest($requestUri = null, $requestMethod = null)
     {
+        if (!$this->isConfigConsistent() && false) {
+            throw new \LogicException('The client configuration is not consistent');
+        }
+
         $pathInfo = $requestUri;
 
         if (false !== $pos = strpos($pathInfo, '?')) {
@@ -288,64 +346,14 @@ class Connect
         $info = $this->getDispatcher()->dispatch($requestMethod, $pathInfo);
 
         if ($info[0] == Dispatcher::FOUND) {
-            $certificate = $this->getSaml()
-                ->getMetadata()
-                ->getIdentityProvider()
-                ->getFirstKeyDescriptor()
-                ->getCertificate()->toPem();
-
             try {
-                $response = null;
-
-                if ($pathInfo == $this->getConfig()->getProfileAssociationPath()) {
-                    /** @var RequestMessageInterface $requestMessage */
-                    $requestMessage = ProfileAssociationServerRequestFactory::fromGlobals()
-                        ->setProfileAssociationMessageExtractor(
-                            (new ProfileAssociationMessageExtractor())
-                                ->setMessageExtractor((new MessageExtractor())->setHydrator(new MessageHydrator()))
-                        )
-                        ->extract(
-                            $this->getSaml()->getMetadata()->getServiceProviderPrivateKey()
-                        );
-
-                    $responseMessage = $info[1]($requestMessage);
-
-                    if (!$responseMessage instanceof ResponseMessageInterface) {
-                        throw new \LogicException(
-                            sprintf(
-                                'Profile association callback must return a instance of %s, %s returned.',
-                                ResponseMessageInterface::class,
-                                is_object($response) ? get_class($response) : gettype($response)
-                            )
-                        );
-                    }
-
-                    if (!in_array($responseMessage->getRole(), $requestMessage->getRoles())) {
-                        throw new \LogicException(
-                            sprintf(
-                                'Role provided by response message "%s" is not in roles "%s"',
-                                $responseMessage->getRole(),
-                                implode(', ', $requestMessage->getRoles())
-                            )
-                        );
-                    }
-
-                    $response = (new ProfileAssociationResponse($responseMessage))->build($certificate);
-                } else {
-                    $response = $info[1]($this);
-                }
+                $response = $info[1]($this);
 
                 if ($response instanceof ResponseInterface) {
                     $this->setResponse($response);
                 }
-            } catch (\Exception $e) {
-                if ($e instanceof ProfileAssociationException) {
-                    $this->setResponse($e->setCertificate($certificate)->getResponse());
-                } elseif ($e instanceof ResponseExceptionInterface) {
-                    $this->setResponse($e->getResponse());
-                } else {
-                    throw $e;
-                }
+            } catch (ResponseExceptionInterface $e) {
+                $this->setResponse($e->getResponse());
             }
         } elseif (!$this->isAuthenticated()) {
             if (strtoupper($requestMethod) == 'GET') {
@@ -381,19 +389,41 @@ class Connect
      */
     protected function initDispatcher()
     {
-        $this->setDispatcher(
-            \FastRoute\simpleDispatcher(function (RouteCollector $r) {
-                $r->addRoute('POST', $this->getSaml()->getAcsLocation(), new SamlResponseHandler());
-                $r->addRoute(['POST', 'GET'], $this->getSaml()->getLogoutLocation(), new SamlLogoutHandler());
+        if ($this->isConfigConsistent()) {
+            $this->setDispatcher(
+                \FastRoute\simpleDispatcher(function (RouteCollector $r) {
+                    $r->addRoute('POST', $this->getSaml()->getAcsLocation(), new SamlResponseHandler());
+                    $r->addRoute(['POST', 'GET'], $this->getSaml()->getLogoutLocation(), new SamlLogoutHandler());
+                    $r->addRoute(['GET'], $this->getConfig()->getAdminPathInfo(), new PingAdminHandler());
+                    $r->addRoute(['DELETE'], $this->getConfig()->getAdminPathInfo(), new DeleteAdminHandler());
+                    $r->addRoute(['POST'], $this->getConfig()->getAdminPathInfo(), new RegisterAdminHandler());
 
-                if ($this->getConfig()->hasProfileAssociationCallback()) {
-                    $r->addRoute(
-                        'POST',
-                        $this->getConfig()->getProfileAssociationPath(),
-                        $this->getConfig()->getProfileAssociationCallback()
-                    );
-                }
-            })
-        );
+                    if ($this->getConfig()->hasProfileAssociationCallback()) {
+                        $r->addRoute(
+                            'POST',
+                            $this->getConfig()->getProfileAssociationPath(),
+                            new ProfileAssociationHandler($this->getConfig()->getProfileAssociationCallback())
+                        );
+                    }
+                })
+            );
+        } else {
+            $this->setDispatcher(
+                \FastRoute\simpleDispatcher(function (RouteCollector $r) {
+                    $r->addRoute(['GET'], $this->getConfig()->getAdminPathInfo(), new PingAdminHandler());
+                    $r->addRoute('POST', $this->getConfig()->getAdminPathInfo(), new RegisterAdminHandler());
+                })
+            );
+        }
+    }
+
+    /**
+     * Check the config consistency
+     *
+     * @param Config $config
+     */
+    protected function checkConfigConsistency(Config $config)
+    {
+        $this->setIsConfigConsistent((new ConfigConsistency($config))->validate());
     }
 }
