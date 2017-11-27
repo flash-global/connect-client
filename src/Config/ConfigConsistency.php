@@ -122,7 +122,7 @@ class ConfigConsistency
      */
     protected function createIdpMetadataFile()
     {
-        $url = $this->getConfig()->getIdpEntityID() . '/idp.xml';
+        $url = $this->getConfig()->getIdpEntityID() . $this->getConfig()->getIdpMetadataFileTarget();
 
         try {
             $idp = file_get_contents($url);
