@@ -64,7 +64,7 @@ class TokenTest extends TestCase
     public function testValidateHasCache($cacheValue, $exception)
     {
         if ($exception) {
-            $this->expectException(TokenException::class);
+            $this->setExpectedException(TokenException::class);
         }
         $cache = $this->getMockBuilder(CacheTest::class)
             ->setMethods(['get'])
@@ -113,7 +113,7 @@ class TokenTest extends TestCase
 
     public function testValidateException()
     {
-        $this->expectException(TokenException::class);
+        $this->setExpectedException(TokenException::class);
 
         $body = json_encode([
             'expire_at' => '2017-12-12',
@@ -186,7 +186,7 @@ class TokenTest extends TestCase
 
         $token->setCache($cache);
 
-        $this->expectException(TokenException::class);
+        $this->setExpectedException(TokenException::class);
         $token->validate('AAA');
     }
 
@@ -276,7 +276,7 @@ class TokenTest extends TestCase
             ->willThrowException(new \Exception('', 0));
 
         $token->setTokenizer($tokenizer);
-        $this->expectException(TokenException::class);
+        $this->setExpectedException(TokenException::class);
         $token->create($connect);
     }
 
@@ -329,7 +329,7 @@ class TokenTest extends TestCase
             );
 
         $token->setTokenizer($tokenizer);
-        $this->expectException(TokenException::class);
+        $this->setExpectedException(TokenException::class);
         $token->create($connect);
     }
 
@@ -383,7 +383,7 @@ class TokenTest extends TestCase
             ->willThrowException(new \Exception('', 0));
 
         $token->setTokenizer($tokenizer);
-        $this->expectException(TokenException::class);
+        $this->setExpectedException(TokenException::class);
         $token->createApplicationToken($application, $privateKey);
     }
 
@@ -417,7 +417,7 @@ class TokenTest extends TestCase
             );
 
         $token->setTokenizer($tokenizer);
-        $this->expectException(TokenException::class);
+        $this->setExpectedException(TokenException::class);
         $token->createApplicationToken($application, $privateKey);
     }
 

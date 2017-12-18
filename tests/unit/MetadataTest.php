@@ -23,7 +23,7 @@ class MetadataTest extends TestCase
     {
         $metadata = new Metadata();
 
-        $idp = $this->createMock(EntityDescriptor::class);
+        $idp = $this->getMockBuilder(EntityDescriptor::class)->getMock();
 
         $metadata->setIdentityProvider($idp);
 
@@ -37,7 +37,7 @@ class MetadataTest extends TestCase
     {
         $metadata = new Metadata();
 
-        $ps = $this->createMock(EntityDescriptor::class);
+        $ps = $this->getMockBuilder(EntityDescriptor::class)->getMock();
 
         $metadata->setServiceProvider($ps);
 
@@ -65,8 +65,7 @@ class MetadataTest extends TestCase
         $metadata = new Metadata();
         $metadata->setIdentityProvider(new EntityDescriptor());
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('A Identity Provider descriptor must be registered');
+        $this->setExpectedException(\LogicException::class, 'A Identity Provider descriptor must be registered');
 
         $metadata->getFirstSso();
     }
@@ -79,8 +78,10 @@ class MetadataTest extends TestCase
                 ->addItem(new IdpSsoDescriptor())
         );
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('The Identity Provider descriptor must have one SSO registered');
+        $this->setExpectedException(
+            \LogicException::class,
+            'The Identity Provider descriptor must have one SSO registered'
+        );
 
         $metadata->getFirstSso();
     }
@@ -100,8 +101,7 @@ class MetadataTest extends TestCase
     {
         $metadata = new Metadata();
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('A Service Provider descriptor must be registered');
+        $this->setExpectedException(\LogicException::class, 'A Service Provider descriptor must be registered');
 
         $metadata->getFirstSpSsoDescriptor();
     }
@@ -128,8 +128,10 @@ class MetadataTest extends TestCase
 
         $metadata->setServiceProvider((new EntityDescriptor())->addItem($sp));
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('The Service Provider must have one ACS service registered');
+        $this->setExpectedException(
+            \LogicException::class,
+            'The Service Provider must have one ACS service registered'
+        );
 
         $metadata->getFirstAcs();
     }
@@ -156,8 +158,10 @@ class MetadataTest extends TestCase
 
         $metadata->setServiceProvider((new EntityDescriptor())->addItem($sp));
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('The Service Provider must have one Logout service registered');
+        $this->setExpectedException(
+            \LogicException::class,
+            'The Service Provider must have one Logout service registered'
+        );
 
         $metadata->getFirstLogout();
     }

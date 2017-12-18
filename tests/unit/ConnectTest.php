@@ -40,7 +40,6 @@ class ConnectTest extends TestCase
     {
         $this->testOneAccessors('role', 'ADMIN');
         $this->testOneAccessors('localUsername', 'toto');
-        $this->testOneAccessors('userAttribution', new UserAttribution());
     }
 
     public function testSwitchLocalUsernameNotAuthenticated()
@@ -55,7 +54,7 @@ class ConnectTest extends TestCase
             ->getMock();
         $connect->method('isAuthenticated')->willReturn(false);
 
-        $this->expectException(UserAttributionException::class);
+        $this->setExpectedException(UserAttributionException::class);
         $connect->switchLocalUsername('test', 'USER');
     }
 
@@ -89,7 +88,7 @@ class ConnectTest extends TestCase
         $connect->method('getConfig')->willReturn($config);
         $connect->method('getUserAttribution')->willReturn($userAttribution);
 
-        $this->expectException(UserAttributionException::class);
+        $this->setExpectedException(UserAttributionException::class);
         $connect->switchLocalUsername('test', 'USER');
     }
 
@@ -140,7 +139,7 @@ class ConnectTest extends TestCase
         $connect->method('getUserAttribution')->willReturn($userAttribution);
         $connect->method('setUser');
 
-        $this->expectException(UserAttributionException::class);
+        $this->setExpectedException(UserAttributionException::class);
         $connect->switchLocalUsername('test', 'USER');
     }
 
@@ -222,7 +221,7 @@ class ConnectTest extends TestCase
             ->getMock();
         $connect->method('isAuthenticated')->willReturn(false);
 
-        $this->expectException(UserAttributionException::class);
+        $this->setExpectedException(UserAttributionException::class);
         $connect->switchRole('USER');
     }
 
@@ -256,7 +255,7 @@ class ConnectTest extends TestCase
         $connect->method('getConfig')->willReturn($config);
         $connect->method('getUserAttribution')->willReturn($userAttribution);
 
-        $this->expectException(UserAttributionException::class);
+        $this->setExpectedException(UserAttributionException::class);
         $connect->switchRole('USER');
     }
 
@@ -307,7 +306,7 @@ class ConnectTest extends TestCase
         $connect->method('getUserAttribution')->willReturn($userAttribution);
         $connect->method('setUser');
 
-        $this->expectException(UserAttributionException::class);
+        $this->setExpectedException(UserAttributionException::class);
         $connect->switchRole('USER');
     }
 
