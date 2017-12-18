@@ -91,8 +91,6 @@ class Connect
         $this->init();
 
         $this->initDispatcher();
-
-        $this->initUserAttribution();
     }
 
     /**
@@ -329,29 +327,6 @@ class Connect
     }
 
     /**
-     * Get UserAttribution
-     *
-     * @return UserAttribution
-     */
-    public function getUserAttribution()
-    {
-        return $this->userAttribution;
-    }
-
-    /**
-     * Set UserAttribution
-     *
-     * @param UserAttribution $userAttribution
-     *
-     * @return $this
-     */
-    public function setUserAttribution(UserAttribution $userAttribution)
-    {
-        $this->userAttribution = $userAttribution;
-        return $this;
-    }
-
-    /**
      * Handle connect request
      *
      * @param string $requestUri
@@ -454,20 +429,6 @@ class Connect
     /**
      * @codeCoverageIgnore
      *
-     * Init the base URL for the UserAttribution API client
-     */
-    protected function initUserAttribution()
-    {
-        $userAttribution = new UserAttribution([
-            UserAttribution::OPTION_BASEURL => $this->getConfig()->getIdpEntityID()
-        ]);
-
-        $this->setUserAttribution($userAttribution);
-    }
-
-    /**
-     * @codeCoverageIgnore
-     *
      * Check the config consistency
      *
      * @param Config $config
@@ -535,7 +496,7 @@ class Connect
 
             try {
                 $userAttributions = $this->getUserAttribution()->get($username, $application);
-                
+
                 $switchedRole = null;
                 foreach ($userAttributions as $userAttribution) {
                     $attribution = (new Attribution())
@@ -548,7 +509,16 @@ class Connect
                 }
 
                 if ($switchedRole) {
-                    $this->setUser($this->getUser()->setCurrentRole($switchedRole->getRole()));
+                    $roles = explode(':', $switchedRole->getRole());
+                    if (count($roles) == 3) {
+                        $role = $roles[1];
+                        $this->getUser()->setCurrentRole($role);
+                        $this->getUser()->setLocalUsername($roles[2]);
+
+                        $this->setUser($this->getUser());
+                    } else {
+                        $this->setUser($this->getUser()->setCurrentRole($switchedRole->getRole()));
+                    }
                 } else {
                     throw new UserAttributionException('Role not found.', 400);
                 }
