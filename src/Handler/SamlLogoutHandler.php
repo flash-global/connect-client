@@ -48,7 +48,7 @@ class SamlLogoutHandler
         }
 
         return $connect->getSaml()->getHttpPostBindingResponse(
-            $connect->getSaml()->prepareLogoutRequest($connect->getUser())
+            $connect->getSaml()->prepareLogoutRequest($connect->getUser(), $connect->getSessionIndex())
         );
     }
 }

@@ -35,9 +35,14 @@ class SamlResponseHandler
             isset($_SESSION['SAML_RelayState']) ? $_SESSION['SAML_RelayState'] : null
         );
 
+        $assertion = $response->getFirstAssertion();
         $connect->setUser(
-            $connect->getSaml()->retrieveUserFromAssertion($response->getFirstAssertion())
+            $connect->getSaml()->retrieveUserFromAssertion($assertion)
         );
+
+        if ($assertion->getFirstAuthnStatement()) {
+            $connect->setSessionIndex($assertion->getFirstAuthnStatement()->getSessionIndex());
+        }
 
         $targetedPath = isset($_SESSION['targeted_path'])
             ? $_SESSION['targeted_path']

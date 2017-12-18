@@ -32,6 +32,11 @@ class Connect
     protected $user;
 
     /**
+     * @var string
+     */
+    protected $sessionIndex = null;
+
+    /**
      * @var Saml
      */
     protected $saml;
@@ -67,11 +72,6 @@ class Connect
     protected $isConfigConsistent = false;
 
     /**
-     * @var UserAttribution
-     */
-    protected $userAttribution;
-
-    /**
      * Connect constructor.
      *
      * @param Config $config
@@ -84,6 +84,10 @@ class Connect
 
         if (isset($_SESSION['user'])) {
             $this->setUser(new User($_SESSION['user']));
+        }
+
+        if (isset($_SESSION['session_index'])) {
+            $this->setSessionIndex($_SESSION['session_index']);
         }
 
         $this->setConfig($config);
@@ -156,6 +160,33 @@ class Connect
         $_SESSION['user'] = $this->user->toArray();
         $this->setRole($this->user->getCurrentRole());
         $this->setLocalUsername($this->user->getLocalUsername());
+
+        return $this;
+    }
+
+    /**
+     * Get SessionIndex
+     *
+     * @return string
+     */
+    public function getSessionIndex()
+    {
+        return $this->sessionIndex;
+    }
+
+    /**
+     * Set SessionIndex
+     *
+     * @param string $sessionIndex
+     *
+     * @return $this
+     */
+    public function setSessionIndex($sessionIndex)
+    {
+        $this->sessionIndex = $sessionIndex;
+
+        unset($_SESSION['session_index']);
+        $_SESSION['session_index'] = $sessionIndex;
 
         return $this;
     }
