@@ -5,7 +5,7 @@ namespace Fei\Service\Connect\Client\Config;
 /**
  * Class Config
  *
- * @package Fei\Service\Connect\Clientx
+ * @package Fei\Service\Connect\Client\Config
  */
 class Config
 {

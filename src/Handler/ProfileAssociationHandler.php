@@ -85,7 +85,8 @@ class ProfileAssociationHandler
                 )
                 ->extract($connect->getConfig()->getPrivateKey());
 
-            $response = $this->getProfileAssociationCallback()($message);
+            $callback = $this->getProfileAssociationCallback();
+            $response = $callback($message);
 
             if (!$response instanceof ResponseMessageInterface) {
                 throw new \LogicException(
