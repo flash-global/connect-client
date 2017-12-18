@@ -6,12 +6,14 @@ use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use Fei\Service\Connect\Client\Config\Config;
 use Fei\Service\Connect\Client\Config\ConfigConsistency;
+use Fei\Service\Connect\Client\Exception\UserAttributionException;
 use Fei\Service\Connect\Client\Handler\DeleteAdminHandler;
 use Fei\Service\Connect\Client\Handler\PingAdminHandler;
 use Fei\Service\Connect\Client\Handler\ProfileAssociationHandler;
 use Fei\Service\Connect\Client\Handler\RegisterAdminHandler;
 use Fei\Service\Connect\Client\Handler\SamlLogoutHandler;
 use Fei\Service\Connect\Client\Handler\SamlResponseHandler;
+use Fei\Service\Connect\Common\Entity\Attribution;
 use Fei\Service\Connect\Common\Entity\User;
 use Fei\Service\Connect\Common\Exception\ResponseExceptionInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -65,6 +67,11 @@ class Connect
     protected $isConfigConsistent = false;
 
     /**
+     * @var UserAttribution
+     */
+    protected $userAttribution;
+
+    /**
      * Connect constructor.
      *
      * @param Config $config
@@ -84,6 +91,8 @@ class Connect
         $this->init();
 
         $this->initDispatcher();
+
+        $this->initUserAttribution();
     }
 
     /**
@@ -320,6 +329,29 @@ class Connect
     }
 
     /**
+     * Get UserAttribution
+     *
+     * @return UserAttribution
+     */
+    public function getUserAttribution()
+    {
+        return $this->userAttribution;
+    }
+
+    /**
+     * Set UserAttribution
+     *
+     * @param UserAttribution $userAttribution
+     *
+     * @return $this
+     */
+    public function setUserAttribution(UserAttribution $userAttribution)
+    {
+        $this->userAttribution = $userAttribution;
+        return $this;
+    }
+
+    /**
      * Handle connect request
      *
      * @param string $requestUri
@@ -385,6 +417,8 @@ class Connect
     }
 
     /**
+     * @codeCoverageIgnore
+     *
      * Init the route for ACS dispatcher
      */
     protected function initDispatcher()
@@ -418,6 +452,22 @@ class Connect
     }
 
     /**
+     * @codeCoverageIgnore
+     *
+     * Init the base URL for the UserAttribution API client
+     */
+    protected function initUserAttribution()
+    {
+        $userAttribution = new UserAttribution([
+            UserAttribution::OPTION_BASEURL => $this->getConfig()->getIdpEntityID()
+        ]);
+
+        $this->setUserAttribution($userAttribution);
+    }
+
+    /**
+     * @codeCoverageIgnore
+     *
      * Check the config consistency
      *
      * @param Config $config
@@ -425,5 +475,88 @@ class Connect
     protected function checkConfigConsistency(Config $config)
     {
         $this->setIsConfigConsistent((new ConfigConsistency($config))->validate());
+    }
+
+    /**
+     * Switch the User role
+     *
+     * @param string $role
+     */
+    public function switchRole($role)
+    {
+        if ($this->isAuthenticated()) {
+            $username = $this->getUser()->getUserName();
+            $entityId = $this->getConfig()->getEntityID();
+
+            try {
+                $userAttributions = $this->getUserAttribution()->get($username, $entityId);
+
+                $isRole = false;
+                foreach ($userAttributions as $userAttribution) {
+                    $attribution = (new Attribution())
+                        ->hydrate($userAttribution);
+
+                    if ($attribution->getRole()->getRole() == $role
+                        && $attribution->getApplication()->getUrl() == $entityId
+                    ) {
+                        $isRole = true;
+                    }
+                }
+
+                if ($isRole) {
+                    $this->setUser($this->getUser()->setCurrentRole($role));
+                } else {
+                    throw new UserAttributionException('Role not found.', 400);
+                }
+            } catch (\Exception $e) {
+                throw new UserAttributionException($e->getMessage(), $e->getCode(), $e->getPrevious());
+            }
+        } else {
+            throw new UserAttributionException('User not found.', 400);
+        }
+    }
+
+    /**
+     * Switch the User role by localUsername
+     *
+     * @param string $localUsername
+     * @param string $role
+     * @param null $application
+     */
+    public function switchLocalUsername($localUsername, $role, $application = null)
+    {
+        if ($this->isAuthenticated()) {
+            $username = $this->getUser()->getUserName();
+
+            // If no Application, get current Application
+            if (!$application) {
+                $application = $this->getConfig()->getEntityID();
+            }
+
+            try {
+                $userAttributions = $this->getUserAttribution()->get($username, $application);
+                
+                $switchedRole = null;
+                foreach ($userAttributions as $userAttribution) {
+                    $attribution = (new Attribution())
+                        ->hydrate($userAttribution);
+
+                    $pattern = '/:' . $role . ':' . $localUsername . '/';
+                    if (preg_match($pattern, $attribution->getRole()->getRole())) {
+                        $switchedRole = $attribution->getRole();
+                    }
+                }
+
+                if ($switchedRole) {
+                    $this->setUser($this->getUser()->setCurrentRole($switchedRole->getRole()));
+                } else {
+                    throw new UserAttributionException('Role not found.', 400);
+                }
+            } catch (\Exception $e) {
+                throw new UserAttributionException($e->getMessage(), $e->getCode(), $e->getPrevious());
+            }
+        } else {
+            throw new UserAttributionException('User not found.', 400);
+        }
     }
 }

@@ -3,6 +3,7 @@
 namespace Test\Fei\Service\Connect\Client;
 
 use Fei\Service\Connect\Client\Metadata;
+use LightSaml\Model\Context\DeserializationContext;
 use LightSaml\Model\Metadata\AssertionConsumerService;
 use LightSaml\Model\Metadata\EntityDescriptor;
 use LightSaml\Model\Metadata\IdpSsoDescriptor;

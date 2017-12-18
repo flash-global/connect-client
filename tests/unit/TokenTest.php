@@ -4,7 +4,6 @@ namespace Test\Fei\Service\Connect\Client;
 
 use Fei\ApiClient\ApiClientException;
 use Fei\ApiClient\ResponseDescriptor;
-use Fei\Service\Connect\Client\Config\Config;
 use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Exception\TokenException;
 use Fei\Service\Connect\Client\Metadata;
@@ -15,19 +14,21 @@ use Fei\Service\Connect\Common\Entity\Application;
 use Fei\Service\Connect\Common\Entity\User;
 use Fei\Service\Connect\Common\Token\Tokenizer;
 use Fei\Service\Connect\Common\Token\TokenRequest;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use LightSaml\Model\Metadata\EntityDescriptor;
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\DateInterval;
 
 /**
- * Class TokenValidatorTest
+ * Class TokenTest
  *
  * @package Test\Fei\Service\Connect\Client
  */
 class TokenTest extends TestCase
 {
-
     public function testAccessors()
     {
         $this->testOneAccessors('cache', new CacheTest());
@@ -52,7 +53,7 @@ class TokenTest extends TestCase
     public function providerValidateHasCache()
     {
         return [
-            ['{"expire_at":"2017-12-12"}', false],
+            ['{"expire_at":"2060-12-12"}', false],
             ['{"expire_at":"2015-12-12"}', true]
         ];
     }
@@ -120,7 +121,6 @@ class TokenTest extends TestCase
             'application' => []
         ]);
 
-
         $cache = $this->getMockBuilder(CacheTest::class)
             ->setMethods(['get'])
             ->getMock();
@@ -146,16 +146,57 @@ class TokenTest extends TestCase
         $token->validate('AAA');
     }
 
+    public function testValidateWithBadResponseException()
+    {
+        $body = json_encode([
+            'expire_at' => '2017-12-12',
+            'user'      => [],
+            'application' => []
+        ]);
+
+        $cache = $this->getMockBuilder(CacheTest::class)
+            ->setMethods(['get'])
+            ->getMock();
+        $cache->expects($this->once())->method('get')
+            ->willReturn(null);
+
+        $descriptor = $this->getMockBuilder(ResponseDescriptor::class)
+            ->setMethods(['getBody'])
+            ->getMock();
+        $descriptor->expects($this->once())->method('getBody')
+            ->willReturn($body);
+
+        $token = $this->getMockBuilder(Token::class)
+            ->setMethods(['send', 'buildValidationReturn'])
+            ->getMock();
+        $token->expects($this->once())->method('send')
+            ->willReturn($descriptor);
+        $token->expects($this->once())->method('buildValidationReturn')
+            ->willThrowException(
+                new ApiClientException(
+                    '',
+                    0,
+                    new BadResponseException(
+                        'BadResponseException',
+                        new Request('GET', 'test'),
+                        new Response(500)
+                    )
+                )
+            );
+
+        $token->setCache($cache);
+
+        $this->expectException(TokenException::class);
+        $token->validate('AAA');
+    }
+
     public function testCreate()
     {
-        return;
-        $entityDescriptor = (new EntityDescriptor());
-
         $metadata = $this->getMockBuilder(Metadata::class)
             ->setMethods(['getServiceProvider'])
             ->getMock();
         $metadata->expects($this->once())->method('getServiceProvider')
-            ->willReturn($entityDescriptor);
+            ->willReturn((new EntityDescriptor()));
 
         $saml = $this->getMockBuilder(Saml::class)
             ->setMethods(['getMetadata'])
@@ -164,17 +205,20 @@ class TokenTest extends TestCase
         $saml->expects($this->once())->method('getMetadata')
             ->willReturn($metadata);
 
-        $connect = (new Connect($this->getConfig()))
-            ->setUser(new User())
-            ->setSaml($saml);
-
+        $connect = $this->getMockBuilder(Connect::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'getSaml',
+                'getUser'
+            ])
+            ->getMock();
+        $connect->method('getSaml')->willReturn($saml);
+        $connect->method('getUser')->willReturn(new User());
 
         $body = '{}';
         $tokenizer = $this->getMockBuilder(Tokenizer::class)
-            ->setMethods(['signTokenRequest', 'createApplicationTokenRequest'])
+            ->setMethods(['signTokenRequest'])
             ->getMock();
-        $tokenizer->expects($this->once())->method('createApplicationTokenRequest')
-            ->willReturn(new TokenRequest());
         $tokenizer->expects($this->once())->method('signTokenRequest')
             ->willReturn(new TokenRequest());
 
@@ -191,6 +235,101 @@ class TokenTest extends TestCase
             ->willReturn($descriptor);
 
         $token->setTokenizer($tokenizer);
+        $token->create($connect);
+    }
+
+    public function testCreateWithException()
+    {
+        $metadata = $this->getMockBuilder(Metadata::class)
+            ->setMethods(['getServiceProvider'])
+            ->getMock();
+        $metadata->expects($this->once())->method('getServiceProvider')
+            ->willReturn((new EntityDescriptor()));
+
+        $saml = $this->getMockBuilder(Saml::class)
+            ->setMethods(['getMetadata'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $saml->expects($this->once())->method('getMetadata')
+            ->willReturn($metadata);
+
+        $connect = $this->getMockBuilder(Connect::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'getSaml',
+                'getUser'
+            ])
+            ->getMock();
+        $connect->method('getSaml')->willReturn($saml);
+        $connect->method('getUser')->willReturn(new User());
+
+        $tokenizer = $this->getMockBuilder(Tokenizer::class)
+            ->setMethods(['signTokenRequest'])
+            ->getMock();
+        $tokenizer->expects($this->once())->method('signTokenRequest')
+            ->willReturn(new TokenRequest());
+
+        $token = $this->getMockBuilder(Token::class)
+            ->setMethods(['send'])
+            ->getMock();
+        $token->expects($this->once())->method('send')
+            ->willThrowException(new \Exception('', 0));
+
+        $token->setTokenizer($tokenizer);
+        $this->expectException(TokenException::class);
+        $token->create($connect);
+    }
+
+
+    public function testCreateWithBadResponseException()
+    {
+        $metadata = $this->getMockBuilder(Metadata::class)
+            ->setMethods(['getServiceProvider'])
+            ->getMock();
+        $metadata->expects($this->once())->method('getServiceProvider')
+            ->willReturn((new EntityDescriptor()));
+
+        $saml = $this->getMockBuilder(Saml::class)
+            ->setMethods(['getMetadata'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $saml->expects($this->once())->method('getMetadata')
+            ->willReturn($metadata);
+
+        $connect = $this->getMockBuilder(Connect::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'getSaml',
+                'getUser'
+            ])
+            ->getMock();
+        $connect->method('getSaml')->willReturn($saml);
+        $connect->method('getUser')->willReturn(new User());
+
+        $tokenizer = $this->getMockBuilder(Tokenizer::class)
+            ->setMethods(['signTokenRequest'])
+            ->getMock();
+        $tokenizer->expects($this->once())->method('signTokenRequest')
+            ->willReturn(new TokenRequest());
+
+        $token = $this->getMockBuilder(Token::class)
+            ->setMethods(['send'])
+            ->getMock();
+        $token->expects($this->once())->method('send')
+            ->willThrowException(
+                new \Exception(
+                    '',
+                    0,
+                    new BadResponseException(
+                        'BadResponseException',
+                        new Request('GET', 'test'),
+                        new Response(500)
+                    )
+                )
+            );
+
+        $token->setTokenizer($tokenizer);
+        $this->expectException(TokenException::class);
         $token->create($connect);
     }
 
@@ -224,18 +363,62 @@ class TokenTest extends TestCase
         $token->createApplicationToken($application, $privateKey);
     }
 
-    protected function getConfig()
+    public function testCreateApplicationTokenWithException()
     {
-        $config = (new Config())
-            ->setEntityID('http://client.dev:8084')
-            ->setIdpEntityID('http://idp.dev:8080')
-            ->setSamlMetadataBaseDir(__DIR__ . '/test/metadata')
-            ->setPrivateKeyFilePath(__DIR__ . '/test/keys/sp.pem')
-            ->setDefaultTargetPath('/resource.php')
-            ->setLogoutTargetPath('/')
-            ->setAdminPathInfo('/admin.php');
+        $application = new Application();
+        $privateKey  = (new RsaKeyGen())->createPrivateKey();
 
-        return $config;
+        $tokenizer = $this->getMockBuilder(Tokenizer::class)
+            ->setMethods(['signTokenRequest', 'createApplicationTokenRequest'])
+            ->getMock();
+        $tokenizer->expects($this->once())->method('createApplicationTokenRequest')
+            ->willReturn(new TokenRequest());
+        $tokenizer->expects($this->once())->method('signTokenRequest')
+            ->willReturn(new TokenRequest());
+
+        $token = $this->getMockBuilder(Token::class)
+            ->setMethods(['send'])
+            ->getMock();
+        $token->expects($this->once())->method('send')
+            ->willThrowException(new \Exception('', 0));
+
+        $token->setTokenizer($tokenizer);
+        $this->expectException(TokenException::class);
+        $token->createApplicationToken($application, $privateKey);
+    }
+
+    public function testCreateApplicationTokenWithBadResponseException()
+    {
+        $application = new Application();
+        $privateKey  = (new RsaKeyGen())->createPrivateKey();
+
+        $tokenizer = $this->getMockBuilder(Tokenizer::class)
+            ->setMethods(['signTokenRequest', 'createApplicationTokenRequest'])
+            ->getMock();
+        $tokenizer->expects($this->once())->method('createApplicationTokenRequest')
+            ->willReturn(new TokenRequest());
+        $tokenizer->expects($this->once())->method('signTokenRequest')
+            ->willReturn(new TokenRequest());
+
+        $token = $this->getMockBuilder(Token::class)
+            ->setMethods(['send'])
+            ->getMock();
+        $token->expects($this->once())->method('send')
+            ->willThrowException(
+                new \Exception(
+                    '',
+                    0,
+                    new BadResponseException(
+                        'BadResponseException',
+                        new Request('GET', 'test'),
+                        new Response(500)
+                    )
+                )
+            );
+
+        $token->setTokenizer($tokenizer);
+        $this->expectException(TokenException::class);
+        $token->createApplicationToken($application, $privateKey);
     }
 
     protected function testOneAccessors($name, $expected)
