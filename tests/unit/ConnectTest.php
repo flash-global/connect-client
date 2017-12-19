@@ -2,6 +2,7 @@
 
 namespace Test\Fei\Service\Connect\Client;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Exception\UserAttributionException;
 use Fei\Service\Connect\Client\UserAttribution;
@@ -58,48 +59,10 @@ class ConnectTest extends TestCase
         $connect->switchLocalUsername('test', 'USER');
     }
 
-    public function testSwitchLocalUsernameNotUser()
-    {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods([
-                'get'
-            ])
-            ->getMock();
-        $userAttribution->method('get')->willThrowException(new \Exception());
-
-        $config = (new Config())
-            ->setEntityID('http://filer.flash-global.eu');
-
-        $connect = $this->getMockBuilder(Connect::class)
-            ->disableOriginalConstructor()
-            ->setMethods([
-                'getSaml',
-                'getUser',
-                'getConfig',
-                'isAuthenticated',
-                'getUserAttribution'
-            ])
-            ->getMock();
-        $connect->method('isAuthenticated')->willReturn(true);
-        $connect->method('getUser')->willReturn(
-            (new User())
-                ->setUserName('test')
-        );
-        $connect->method('getConfig')->willReturn($config);
-        $connect->method('getUserAttribution')->willReturn($userAttribution);
-
-        $this->setExpectedException(UserAttributionException::class);
-        $connect->switchLocalUsername('test', 'USER');
-    }
-
     public function testSwitchLocalUsernameNotRole()
     {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods([
-                'get'
-            ])
-            ->getMock();
-        $userAttribution->method('get')->willReturn([
+        $userAttributions = new ArrayCollection();
+        $userAttributions->add(
             (new Attribution())
                 ->setRole(
                     (new Role())
@@ -112,9 +75,7 @@ class ConnectTest extends TestCase
                 ->setUser(
                     (new User())
                         ->setUserName('test')
-                )
-                ->toArray(),
-        ]);
+                ));
 
         $config = (new Config())
             ->setEntityID('http://filer.flash-global.eu');
@@ -126,17 +87,16 @@ class ConnectTest extends TestCase
                 'getUser',
                 'setUser',
                 'getConfig',
-                'isAuthenticated',
-                'getUserAttribution'
+                'isAuthenticated'
             ])
             ->getMock();
         $connect->method('isAuthenticated')->willReturn(true);
         $connect->method('getUser')->willReturn(
             (new User())
                 ->setUserName('test')
+                ->setAttributions($userAttributions)
         );
         $connect->method('getConfig')->willReturn($config);
-        $connect->method('getUserAttribution')->willReturn($userAttribution);
         $connect->method('setUser');
 
         $this->setExpectedException(UserAttributionException::class);
@@ -145,13 +105,8 @@ class ConnectTest extends TestCase
 
     public function testSwitchLocalUsername()
     {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods([
-                'get'
-            ])
-            ->getMock();
-        $userAttribution->method('get')->willReturn([
-            (new Attribution())
+        $userAttributions = new ArrayCollection();
+        $userAttributions->add((new Attribution())
                 ->setRole(
                     (new Role())
                         ->setRole('Filer:USER:test')
@@ -164,9 +119,8 @@ class ConnectTest extends TestCase
                 ->setUser(
                     (new User())
                         ->setUserName('test')
-                )
-                ->toArray(),
-            (new Attribution())
+                ));
+        $userAttributions->add((new Attribution())
                 ->setRole(
                     (new Role())
                         ->setRole('Filer:ADMIN:test')
@@ -179,9 +133,7 @@ class ConnectTest extends TestCase
                 ->setUser(
                     (new User())
                         ->setUserName('test')
-                )
-                ->toArray(),
-        ]);
+                ));
 
         $config = (new Config())
             ->setEntityID('http://filer.flash-global.eu');
@@ -193,17 +145,16 @@ class ConnectTest extends TestCase
                 'getUser',
                 'setUser',
                 'getConfig',
-                'isAuthenticated',
-                'getUserAttribution'
+                'isAuthenticated'
             ])
             ->getMock();
         $connect->method('isAuthenticated')->willReturn(true);
         $connect->method('getUser')->willReturn(
             (new User())
                 ->setUserName('test')
+                ->setAttributions($userAttributions)
         );
         $connect->method('getConfig')->willReturn($config);
-        $connect->method('getUserAttribution')->willReturn($userAttribution);
         $connect->method('setUser');
 
         $connect->switchLocalUsername('test', 'USER');
@@ -225,48 +176,10 @@ class ConnectTest extends TestCase
         $connect->switchRole('USER');
     }
 
-    public function testSwitchRoleNotUser()
-    {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods([
-                'get'
-            ])
-            ->getMock();
-        $userAttribution->method('get')->willThrowException(new \Exception());
-
-        $config = (new Config())
-            ->setEntityID('http://filer.flash-global.eu');
-
-        $connect = $this->getMockBuilder(Connect::class)
-            ->disableOriginalConstructor()
-            ->setMethods([
-                'getSaml',
-                'getUser',
-                'getConfig',
-                'isAuthenticated',
-                'getUserAttribution'
-            ])
-            ->getMock();
-        $connect->method('isAuthenticated')->willReturn(true);
-        $connect->method('getUser')->willReturn(
-            (new User())
-                ->setUserName('test')
-        );
-        $connect->method('getConfig')->willReturn($config);
-        $connect->method('getUserAttribution')->willReturn($userAttribution);
-
-        $this->setExpectedException(UserAttributionException::class);
-        $connect->switchRole('USER');
-    }
-
     public function testSwitchRoleNotRole()
     {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods([
-                'get'
-            ])
-            ->getMock();
-        $userAttribution->method('get')->willReturn([
+        $userAttributions = new ArrayCollection();
+        $userAttributions->add(
             (new Attribution())
                 ->setRole(
                     (new Role())
@@ -279,9 +192,7 @@ class ConnectTest extends TestCase
                 ->setUser(
                     (new User())
                         ->setUserName('test')
-                )
-                ->toArray(),
-        ]);
+                ));
 
         $config = (new Config())
             ->setEntityID('http://filer.flash-global.eu');
@@ -293,17 +204,16 @@ class ConnectTest extends TestCase
                 'getUser',
                 'setUser',
                 'getConfig',
-                'isAuthenticated',
-                'getUserAttribution'
+                'isAuthenticated'
             ])
             ->getMock();
         $connect->method('isAuthenticated')->willReturn(true);
         $connect->method('getUser')->willReturn(
             (new User())
                 ->setUserName('test')
+                ->setAttributions($userAttributions)
         );
         $connect->method('getConfig')->willReturn($config);
-        $connect->method('getUserAttribution')->willReturn($userAttribution);
         $connect->method('setUser');
 
         $this->setExpectedException(UserAttributionException::class);
@@ -312,12 +222,8 @@ class ConnectTest extends TestCase
 
     public function testSwitchRole()
     {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods([
-                'get'
-            ])
-            ->getMock();
-        $userAttribution->method('get')->willReturn([
+        $userAttributions = new ArrayCollection();
+        $userAttributions->add(
             (new Attribution())
                 ->setRole(
                     (new Role())
@@ -330,8 +236,8 @@ class ConnectTest extends TestCase
                 ->setUser(
                     (new User())
                         ->setUserName('test')
-                )
-                ->toArray(),
+                ));
+        $userAttributions->add(
             (new Attribution())
                 ->setRole(
                     (new Role())
@@ -344,9 +250,7 @@ class ConnectTest extends TestCase
                 ->setUser(
                     (new User())
                         ->setUserName('test')
-                )
-                ->toArray(),
-        ]);
+                ));
 
         $config = (new Config())
             ->setEntityID('http://filer.flash-global.eu');
@@ -358,17 +262,16 @@ class ConnectTest extends TestCase
                 'getUser',
                 'setUser',
                 'getConfig',
-                'isAuthenticated',
-                'getUserAttribution'
+                'isAuthenticated'
             ])
             ->getMock();
         $connect->method('isAuthenticated')->willReturn(true);
         $connect->method('getUser')->willReturn(
             (new User())
                 ->setUserName('test')
+                ->setAttributions($userAttributions)
         );
         $connect->method('getConfig')->willReturn($config);
-        $connect->method('getUserAttribution')->willReturn($userAttribution);
         $connect->method('setUser');
 
         $connect->switchRole('USER');

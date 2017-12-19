@@ -446,17 +446,13 @@ class Connect
     public function switchRole($role)
     {
         if ($this->isAuthenticated()) {
-            $username = $this->getUser()->getUserName();
             $entityId = $this->getConfig()->getEntityID();
 
             try {
-                $userAttributions = $this->getUserAttribution()->get($username, $entityId);
-
                 $isRole = false;
-                foreach ($userAttributions as $userAttribution) {
-                    $attribution = (new Attribution())
-                        ->hydrate($userAttribution);
 
+                /** @var Attribution $attribution **/
+                foreach ($this->getUser()->getAttributions() as $attribution) {
                     if ($attribution->getRole()->getRole() == $role
                         && $attribution->getApplication()->getUrl() == $entityId
                     ) {
@@ -487,23 +483,20 @@ class Connect
     public function switchLocalUsername($localUsername, $role, $application = null)
     {
         if ($this->isAuthenticated()) {
-            $username = $this->getUser()->getUserName();
-
             // If no Application, get current Application
             if (!$application) {
                 $application = $this->getConfig()->getEntityID();
             }
 
             try {
-                $userAttributions = $this->getUserAttribution()->get($username, $application);
-
                 $switchedRole = null;
-                foreach ($userAttributions as $userAttribution) {
-                    $attribution = (new Attribution())
-                        ->hydrate($userAttribution);
 
+                /** @var Attribution $attribution **/
+                foreach ($this->getUser()->getAttributions() as $attribution) {
                     $pattern = '/:' . $role . ':' . $localUsername . '/';
-                    if (preg_match($pattern, $attribution->getRole()->getRole())) {
+                    if ($application == $attribution->getApplication()->getUrl()
+                        && preg_match($pattern, $attribution->getRole()->getRole())
+                    ) {
                         $switchedRole = $attribution->getRole();
                     }
                 }
