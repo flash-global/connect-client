@@ -49,14 +49,14 @@ class UserAttribution extends AbstractApiClient
     {
         $attribution = $this->constructAttribution($username, $application, $role, $localUsername);
         $attribution->setIsDefault($isDefault);
-        
+
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::IDP_ATTRIBUTIONS_API))
             ->setMethod('POST');
         $request->setBodyParams([
             'data' => json_encode([$attribution->toArray()])
         ]);
-        
+
         try {
             $response = json_decode($this->send($request)->getBody(), true);
 
@@ -119,7 +119,7 @@ class UserAttribution extends AbstractApiClient
     public function remove($username, $application, $role, $localUsername = null)
     {
         $attribution = $this->constructAttribution($username, $application, $role, $localUsername);
-        
+
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::IDP_ATTRIBUTIONS_API))
             ->setMethod('DELETE')
@@ -195,8 +195,10 @@ class UserAttribution extends AbstractApiClient
             $attributionApplication->setName($application);
         } elseif (is_numeric($application) && (int) $application == $application) {
             $attributionApplication->setId((int) $application);
-        } else {
+        } elseif (filter_var($application, FILTER_VALIDATE_URL)) {
             $attributionApplication->setUrl($application);
+        } else {
+            $attributionApplication->setName($application);
         }
 
         $attributionRole = (new Role());
