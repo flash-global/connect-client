@@ -26,5 +26,6 @@ include __DIR__ . '/config.php';
 
     <?php var_dump($_SESSION) ?>
     <?php var_dump($connect->getUser()) ?>
+    <?php var_dump($connect->getSessionIndex()) ?>
 </body>
 </html>

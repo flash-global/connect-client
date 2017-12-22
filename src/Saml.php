@@ -254,10 +254,11 @@ class Saml
      * Prepare LogoutRequest before sending
      *
      * @param User $user
+     * @param null $sessionIndex
      *
      * @return LogoutRequest|SamlMessage
      */
-    public function prepareLogoutRequest(User $user)
+    public function prepareLogoutRequest(User $user, $sessionIndex = null)
     {
         $request = $this->createLogoutRequest();
 
@@ -267,6 +268,10 @@ class Saml
                 SamlConstants::NAME_ID_FORMAT_UNSPECIFIED
             )
         );
+
+        if (!is_null($sessionIndex)) {
+            $request->setSessionIndex($sessionIndex);
+        }
 
         $request->setDestination(
             $this->getMetadata()->getFirstIdpSsoDescriptor()->getFirstSingleLogoutService()->getLocation()
