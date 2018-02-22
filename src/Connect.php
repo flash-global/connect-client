@@ -8,6 +8,7 @@ use Fei\Service\Connect\Client\Config\Config;
 use Fei\Service\Connect\Client\Config\ConfigConsistency;
 use Fei\Service\Connect\Client\Exception\UserAttributionException;
 use Fei\Service\Connect\Client\Handler\DeleteAdminHandler;
+use Fei\Service\Connect\Client\Handler\MetadataAdminHandler;
 use Fei\Service\Connect\Client\Handler\PingAdminHandler;
 use Fei\Service\Connect\Client\Handler\ProfileAssociationHandler;
 use Fei\Service\Connect\Client\Handler\RegisterAdminHandler;
@@ -435,6 +436,7 @@ class Connect
                     $r->addRoute('POST', $this->getSaml()->getAcsLocation(), new SamlResponseHandler());
                     $r->addRoute(['POST', 'GET'], $this->getSaml()->getLogoutLocation(), new SamlLogoutHandler());
                     $r->addRoute(['GET'], $this->getConfig()->getAdminPathInfo(), new PingAdminHandler());
+                    $r->addRoute(['GET'], $this->getConfig()->getMetadataPathInfo(), new MetadataAdminHandler());
                     $r->addRoute(['DELETE'], $this->getConfig()->getAdminPathInfo(), new DeleteAdminHandler());
                     $r->addRoute(['POST'], $this->getConfig()->getAdminPathInfo(), new RegisterAdminHandler());
 

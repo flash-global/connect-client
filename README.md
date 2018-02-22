@@ -194,3 +194,27 @@ try {
     // Handle exception
 }
 ```
+
+## Link to documentation 
+
+### Examples
+
+You can test this client easily thanks to the folder [examples](https://gitlab.opcoding.eu/flash/services/Connect/client/tree/users-management/example)
+
+There are several methods in UserAdmin class, all listed in the following table:
+
+| Method         | Parameters                                                       | Return                              |
+|----------------|------------------------------------------------------------------|-------------------------------------|
+| persist        | `User $user`                                                     | `User`                              |
+| edit           | `User $formerUser, User $newUser`                                |                                     |
+| delete         | `User $user`                                                     |                                     |
+|getCertificate  |                                                                  |`string`                             |
+|setCertificate  | `string $certificate`                                            |`UserAdmin`                          |
+|getToken        |                                                                  |`Token`                              |
+|setToken        |`Token $token`                                                    |                                     |
+|createToken     |                                                                  |`string`                             |
+|getAdminSpMetadataFile |                                                           |`string`                             |
+|setAdminSpMetadataFile | `string $adminSpMetadataFile`                             |`UserAdmin`                          |
+|getConnect      |                                                                  |`Connect`                            |
+|setConnect      | `Connect $connect                  `                             |`UserAdmin`                          |
+|fetchCertificate|                                                                  |`string`                             |
