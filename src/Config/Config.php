@@ -80,6 +80,11 @@ class Config
     protected $adminPathInfo =  '/connect/admin';
 
     /**
+     * @var string
+     */
+    protected $metadataPathInfo =  '/sp.xml';
+
+    /**
      * Get EntityID
      *
      * @return string
@@ -367,6 +372,30 @@ class Config
     public function setAdminPathInfo($adminPathInfo)
     {
         $this->adminPathInfo = $adminPathInfo;
+
+        return $this;
+    }
+
+    /**
+     * Get MetadataPathInfo
+     *
+     * @return string
+     */
+    public function getMetadataPathInfo()
+    {
+        return $this->metadataPathInfo;
+    }
+
+    /**
+     * Set MetadataPathInfo
+     *
+     * @param string $metadataPathInfo
+     *
+     * @return Config
+     */
+    public function setMetadataPathInfo($metadataPathInfo)
+    {
+        $this->metadataPathInfo = $metadataPathInfo;
 
         return $this;
     }

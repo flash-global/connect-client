@@ -326,17 +326,17 @@
         },
         {
             "name": "fei/connect-common",
-            "version": "v2.1.1",
+            "version": "v2.1.2",
             "source": {
                 "type": "git",
                 "url": "git@github.com:flash-global/connect-common.git",
-                "reference": "8cead76bc058f58ba9c306d7adbc2736c5806c86"
+                "reference": "d2b939daa2eb06c78ac99bc4b539d983e35ef1df"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://composer.flash-global.net/dist/fei-connect-common-8cead76bc058f58ba9c306d7adbc2736c5806c86-zip-a9154a.zip",
-                "reference": "8cead76bc058f58ba9c306d7adbc2736c5806c86",
-                "shasum": "594a2892ecc77dd7d09373e068fbee10550f5858"
+                "url": "https://composer.flash-global.net/dist/fei-connect-common-d2b939daa2eb06c78ac99bc4b539d983e35ef1df-zip-a65d12.zip",
+                "reference": "d2b939daa2eb06c78ac99bc4b539d983e35ef1df",
+                "shasum": "5610c57007c4a2d5a0bcf2d9847ad4fd08fdb2c9"
             },
             "require": {
                 "doctrine/annotations": "~1.2.0",
@@ -367,10 +367,10 @@
             ],
             "description": "Flash Connect common components",
             "support": {
-                "source": "https://github.com/flash-global/connect-common/tree/v2.1.1",
+                "source": "https://github.com/flash-global/connect-common/tree/v2.1.2",
                 "issues": "https://github.com/flash-global/connect-common/issues"
             },
-            "time": "2017-12-22T14:40:45+00:00"
+            "time": "2018-02-26T10:12:33+00:00"
         },
         {
             "name": "fei/entities",
