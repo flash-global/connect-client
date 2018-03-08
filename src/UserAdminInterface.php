@@ -11,7 +11,9 @@ interface UserAdminInterface
 {
     /**
      * Persist a user entity
+     *
      * @param User $user
+     * @return User
      */
     public function persist(User $user);
 
@@ -31,5 +33,13 @@ interface UserAdminInterface
      * @return User
      */
     public function edit(User $formerUser, User $newUser);
+
+    /**
+     * Retrieve a user entity
+     *
+     * @param $username
+     * @return User
+     */
+    public function retrieve($username);
 
 }
