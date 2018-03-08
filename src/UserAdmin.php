@@ -6,12 +6,16 @@ use Fei\ApiClient\AbstractApiClient;
 use Fei\ApiClient\RequestDescriptor;
 use Fei\Service\Connect\Client\Exception\UserException;
 use Fei\Service\Connect\Common\Admin\Message\UserMessage;
+use Fei\Service\Connect\Common\Cryptography\Cryptography;
 use Fei\Service\Connect\Common\Entity\User as UserEntity;
+use Fei\Service\Connect\Common\Message\Extractor\MessageExtractor;
 use Fei\Service\Connect\Common\Message\Http\MessageRequest;
+use Fei\Service\Connect\Common\Message\Hydrator\MessageHydrator;
 use GuzzleHttp\Exception\BadResponseException;
 use LightSaml\Model\Context\DeserializationContext;
 use LightSaml\Model\Metadata\EntityDescriptor;
 use LightSaml\Model\Metadata\KeyDescriptor;
+use Zend\Diactoros\Response\JsonResponse;
 
 class UserAdmin extends AbstractApiClient implements UserAdminInterface
 {
@@ -191,7 +195,6 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
 
         $message = new UserMessage();
         $message->setUser($newUser);
-
         $messageRequest = (new MessageRequest($message))->buildEncrypted($this->getCertificate());
         $messageRequest->getBody()->rewind();
 
@@ -243,6 +246,63 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     }
 
     /**
+     * @param $username
+     * @return UserEntity
+     * @throws UserException
+     */
+    public function retrieve($username) {
+        $keyDescriptor = $this->getConnect()
+            ->getSaml()
+            ->getMetadata()
+            ->getFirstSpSsoDescriptor()
+            ->getFirstKeyDescriptor(KeyDescriptor::USE_ENCRYPTION);
+
+        if (!$keyDescriptor) {
+            $keyDescriptor = $this->getConnect()
+                ->getSaml()
+                ->getMetadata()
+                ->getFirstSpSsoDescriptor()
+                ->getFirstKeyDescriptor(KeyDescriptor::USE_SIGNING);
+        }
+
+        $request = (new RequestDescriptor())
+            ->setMethod('GET')
+            ->setUrl($this
+                ->buildUrl(self::API_USERS_PATH_INFO . '/' . $username.'?certificate='.base64_encode($keyDescriptor
+                        ->getCertificate()
+                        ->toPem())
+                )
+            );
+
+        $request->addHeader('token', $this->createToken());
+
+        try {
+            $userCrypted = base64_decode(json_decode($this->send($request)->getBody(), true)[0]);
+
+            $extractor = (new MessageExtractor())->setHydrator(new MessageHydrator());
+
+            $privateKey = $this->connect->getSaml()->getPrivateKey();
+
+            $message = json_decode((new Cryptography())->decrypt($userCrypted, $privateKey), true);
+
+            /** @var UserMessage $message */
+            $message = $extractor->extract($message);
+
+            return $message->getUser();
+        } catch (\Exception $e) {
+            $previous = $e->getPrevious();
+
+            if ($previous instanceof BadResponseException) {
+                $error = json_decode($previous->getResponse()->getBody()->getContents(), true);
+
+                throw new UserException($error['error'], $previous->getCode(), $previous);
+            }
+
+            throw new UserException($e->getMessage(), $e->getCode(), $e->getPrevious());
+        }
+    }
+
+    /**
      * Fetch Connect Admin SP metadata an return encryption certificate
      *
      * @return string
@@ -250,7 +310,6 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     protected function fetchCertificate()
     {
         $metadata = file_get_contents($this->getBaseUrl() . $this->getAdminSpMetadataFile());
-
         $deserializationContext = new DeserializationContext();
         $deserializationContext->getDocument()->loadXML($metadata);
 
@@ -280,7 +339,6 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
             $this->connect->getSaml()->getMetadata()->getServiceProvider()->getEntityID(),
             $this->connect->getSaml()->getPrivateKey()
         );
-
         return $token['token'];
     }
 }
