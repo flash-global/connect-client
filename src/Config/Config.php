@@ -435,6 +435,4 @@ class Config
         $this->name = $name;
         return $this;
     }
-
-
 }

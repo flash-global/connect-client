@@ -250,7 +250,8 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @return UserEntity
      * @throws UserException
      */
-    public function retrieve($username) {
+    public function retrieve($username)
+    {
         $keyDescriptor = $this->getConnect()
             ->getSaml()
             ->getMetadata()
@@ -270,9 +271,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
             ->setUrl($this
                 ->buildUrl(self::API_USERS_PATH_INFO . '/' . $username.'?certificate='.base64_encode($keyDescriptor
                         ->getCertificate()
-                        ->toPem())
-                )
-            );
+                        ->toPem())));
 
         $request->addHeader('token', $this->createToken());
 

@@ -41,5 +41,4 @@ interface UserAdminInterface
      * @return User
      */
     public function retrieve($username);
-
 }
