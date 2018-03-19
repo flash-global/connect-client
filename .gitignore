@@ -2,3 +2,4 @@
 tests/_output
 example/test
 .idea
+composer.lock
