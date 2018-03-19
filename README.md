@@ -1,4 +1,5 @@
 # Connect-Client
+[![GitHub license](https://img.shields.io/github/license/flash-global/connect-client.svg)](https://github.com/flash-global/connect-client)![continuousphp](https://img.shields.io/continuousphp/git-hub/flash-global/connect-client.svg)[![GitHub issues](https://img.shields.io/github/issues/flash-global/connect-client.svg)](https://github.com/flash-global/connect-client/issues)
 
 The role of Connect-Client is to integrate SAML standard protocol into your application.
 
