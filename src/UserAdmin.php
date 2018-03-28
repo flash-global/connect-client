@@ -8,6 +8,7 @@ use Fei\Service\Connect\Client\Exception\UserException;
 use Fei\Service\Connect\Common\Admin\Message\UserMessage;
 use Fei\Service\Connect\Common\Cryptography\Cryptography;
 use Fei\Service\Connect\Common\Entity\User as UserEntity;
+use Fei\Service\Connect\Common\Entity\User;
 use Fei\Service\Connect\Common\Message\Extractor\MessageExtractor;
 use Fei\Service\Connect\Common\Message\Http\MessageRequest;
 use Fei\Service\Connect\Common\Message\Hydrator\MessageHydrator;
@@ -284,10 +285,16 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
 
             $message = json_decode((new Cryptography())->decrypt($userCrypted, $privateKey), true);
 
-            /** @var UserMessage $message */
             $message = $extractor->extract($message);
 
-            return $message->getUser();
+            /** @var UserMessage $message */
+            $user = $message->getUser();
+
+            if (!$user instanceof User && is_array($user)) {
+                $user = new User($user);
+            }
+
+            return $user;
         } catch (\Exception $e) {
             $previous = $e->getPrevious();
 
