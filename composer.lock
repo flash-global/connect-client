@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "e3b8174e288852cd7f09a81f4e769d80",
+    "content-hash": "b1921ea42f6869f779c5cfcf4086746f",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -284,17 +284,17 @@
         },
         {
             "name": "fei/api-client",
-            "version": "v1.2.2",
+            "version": "v1.2.7",
             "source": {
                 "type": "git",
-                "url": "git@github.com:flash-global/api-client.git",
-                "reference": "427236a046c9f7e08e5d110d39eecbe260338629"
+                "url": "https://github.com/flash-global/api-client.git",
+                "reference": "0e0911feccf62d6c1c00c51d3a14cc989151d252"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://composer.flash-global.net/dist/fei-api-client-427236a046c9f7e08e5d110d39eecbe260338629-zip-729128.zip",
-                "reference": "427236a046c9f7e08e5d110d39eecbe260338629",
-                "shasum": "46ec08bd8449e2010bae07934a125337f5819245"
+                "url": "https://api.github.com/repos/flash-global/api-client/zipball/0e0911feccf62d6c1c00c51d3a14cc989151d252",
+                "reference": "0e0911feccf62d6c1c00c51d3a14cc989151d252",
+                "shasum": "520c85c612116c13d1625cc044c53c85de7c7689"
             },
             "require": {
                 "fei/entities": "1.*",
@@ -303,7 +303,8 @@
             },
             "require-dev": {
                 "codeception/aspect-mock": "*",
-                "codeception/codeception": "^2.2"
+                "codeception/codeception": "^2.2",
+                "squizlabs/php_codesniffer": "3.*"
             },
             "bin": [
                 "scripts/api-client-worker.php"
@@ -315,40 +316,51 @@
                 }
             },
             "license": [
-                "Proprietary"
+                "GPL-3.0"
             ],
-            "description": "FEI client side API helpers",
+            "authors": [
+                {
+                    "name": "Yoctu",
+                    "email": "contact@yoctu.com",
+                    "homepage": "http://yoctu.com/"
+                }
+            ],
+            "description": "Client side API helpers",
             "support": {
                 "source": "https://github.com/flash-global/api-client/tree/master",
                 "issues": "https://github.com/flash-global/api-client/issues"
             },
-            "time": "2017-11-27T08:16:03+00:00"
+            "time": "2018-03-15T16:08:51+00:00"
         },
         {
             "name": "fei/connect-common",
-            "version": "v2.1.2",
+            "version": "v2.2.2",
             "source": {
                 "type": "git",
-                "url": "git@github.com:flash-global/connect-common.git",
-                "reference": "d2b939daa2eb06c78ac99bc4b539d983e35ef1df"
+                "url": "https://github.com/flash-global/connect-common.git",
+                "reference": "f17c15acb2476286478ceb44cf6b9c186463461b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://composer.flash-global.net/dist/fei-connect-common-d2b939daa2eb06c78ac99bc4b539d983e35ef1df-zip-a65d12.zip",
-                "reference": "d2b939daa2eb06c78ac99bc4b539d983e35ef1df",
-                "shasum": "5610c57007c4a2d5a0bcf2d9847ad4fd08fdb2c9"
+                "url": "https://api.github.com/repos/flash-global/connect-common/zipball/f17c15acb2476286478ceb44cf6b9c186463461b",
+                "reference": "f17c15acb2476286478ceb44cf6b9c186463461b",
+                "shasum": ""
             },
             "require": {
                 "doctrine/annotations": "~1.2.0",
                 "doctrine/collections": "~1.3.0",
                 "egulias/email-validator": "~2.1",
                 "fei/entities": "^1.0",
+                "league/fractal": "^0.14.0",
+                "php": ">=5.5",
                 "phpseclib/phpseclib": "^2.0",
                 "zendframework/zend-diactoros": "^1.4",
                 "zendframework/zend-permissions-acl": "^2.6"
             },
             "require-dev": {
-                "codeception/codeception": "^2.3"
+                "codeception/codeception": "~2.4",
+                "phpunit/phpunit": "~4.8",
+                "squizlabs/php_codesniffer": "^3.2"
             },
             "type": "library",
             "autoload": {
@@ -356,33 +368,31 @@
                     "Fei\\Service\\Connect\\Common\\": "src"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "proprietary"
+                "GPL-3.0"
             ],
             "authors": [
                 {
-                    "name": "Vincent Simonin",
-                    "email": "vsi@opcoding.eu"
+                    "name": "Yoctu",
+                    "email": "contact@yoctu.com",
+                    "homepage": "http://yoctu.com/"
                 }
             ],
             "description": "Flash Connect common components",
-            "support": {
-                "source": "https://github.com/flash-global/connect-common/tree/v2.1.2",
-                "issues": "https://github.com/flash-global/connect-common/issues"
-            },
-            "time": "2018-02-26T10:12:33+00:00"
+            "time": "2018-04-13T12:00:36+00:00"
         },
         {
             "name": "fei/entities",
             "version": "v1.1.0",
             "source": {
                 "type": "git",
-                "url": "git@github.com:flash-global/entities.git",
+                "url": "https://github.com/flash-global/entities.git",
                 "reference": "21eeb9dee1c43dc1520228d41aea8d5bc2b305ef"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://composer.flash-global.net/dist/fei-entities-21eeb9dee1c43dc1520228d41aea8d5bc2b305ef-zip-0ace6b.zip",
+                "url": "https://api.github.com/repos/flash-global/entities/zipball/21eeb9dee1c43dc1520228d41aea8d5bc2b305ef",
                 "reference": "21eeb9dee1c43dc1520228d41aea8d5bc2b305ef",
                 "shasum": "ca5a9abf9b0bcd3d95452ac52071e2b5a6bb8c7a"
             },
@@ -586,6 +596,69 @@
                 "url"
             ],
             "time": "2017-03-20T17:10:46+00:00"
+        },
+        {
+            "name": "league/fractal",
+            "version": "0.14.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/thephpleague/fractal.git",
+                "reference": "56ad8933fbb40328ca3321c84143b2c16186eebf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/thephpleague/fractal/zipball/56ad8933fbb40328ca3321c84143b2c16186eebf",
+                "reference": "56ad8933fbb40328ca3321c84143b2c16186eebf",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "require-dev": {
+                "illuminate/contracts": "~5.0",
+                "mockery/mockery": "~0.9",
+                "pagerfanta/pagerfanta": "~1.0.0",
+                "phpunit/phpunit": "~4.0",
+                "squizlabs/php_codesniffer": "~1.5",
+                "zendframework/zend-paginator": "~2.3"
+            },
+            "suggest": {
+                "illuminate/pagination": "The Illuminate Pagination component.",
+                "pagerfanta/pagerfanta": "Pagerfanta Paginator",
+                "zendframework/zend-paginator": "Zend Framework Paginator"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.13-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\Fractal\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Phil Sturgeon",
+                    "email": "me@philsturgeon.uk",
+                    "homepage": "http://philsturgeon.uk/",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Handle the output of complex data structures ready for API output.",
+            "homepage": "http://fractal.thephpleague.com/",
+            "keywords": [
+                "api",
+                "json",
+                "league",
+                "rest"
+            ],
+            "time": "2016-07-21T09:56:14+00:00"
         },
         {
             "name": "lightsaml/lightsaml",
@@ -2897,6 +2970,57 @@
             "time": "2015-06-21T13:59:46+00:00"
         },
         {
+            "name": "squizlabs/php_codesniffer",
+            "version": "3.2.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/squizlabs/PHP_CodeSniffer.git",
+                "reference": "4842476c434e375f9d3182ff7b89059583aa8b27"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/4842476c434e375f9d3182ff7b89059583aa8b27",
+                "reference": "4842476c434e375f9d3182ff7b89059583aa8b27",
+                "shasum": ""
+            },
+            "require": {
+                "ext-simplexml": "*",
+                "ext-tokenizer": "*",
+                "ext-xmlwriter": "*",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^4.0 || ^5.0 || ^6.0 || ^7.0"
+            },
+            "bin": [
+                "bin/phpcs",
+                "bin/phpcbf"
+            ],
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.x-dev"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Greg Sherwood",
+                    "role": "lead"
+                }
+            ],
+            "description": "PHP_CodeSniffer tokenizes PHP, JavaScript and CSS files and detects violations of a defined set of coding standards.",
+            "homepage": "http://www.squizlabs.com/php-codesniffer",
+            "keywords": [
+                "phpcs",
+                "standards"
+            ],
+            "time": "2018-02-20T21:35:23+00:00"
+        },
+        {
             "name": "symfony/browser-kit",
             "version": "v3.4.2",
             "source": {
@@ -3399,6 +3523,8 @@
     "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
+    "platform": {
+        "php": ">=5.5"
+    },
     "platform-dev": []
 }
