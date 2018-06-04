@@ -2,9 +2,7 @@
 
 namespace Test\Fei\Service\Connect\Client;
 
-use Fei\ApiClient\RequestDescriptor;
 use Fei\ApiClient\ResponseDescriptor;
-use Fei\Service\Connect\Client\Config\Config;
 use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Exception\UserException;
 use Fei\Service\Connect\Client\Token;
@@ -80,7 +78,7 @@ class UserAdminTest extends TestCase
         $userAdmin->expects($this->once())->method('send')->willThrowException($exception);
         $userAdmin->expects($this->once())->method('createToken')->willReturn('FAKE-TOKEN');
 
-        $this->setExpectedException(UserException::class, $exception);
+        $this->expectException(UserException::class);
 
         /** @var UserAdmin $userAdmin */
         $userAdmin->persist($userEntity);
@@ -105,7 +103,8 @@ class UserAdminTest extends TestCase
         $exception = new \Exception('exception', 0, $badResponse);
 
         $userAdmin->expects($this->once())->method('send')->willThrowException($exception);
-        $this->setExpectedException(UserException::class, 'error');
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage('error');
 
         $userAdmin->persist($userEntity);
     }
@@ -165,7 +164,8 @@ class UserAdminTest extends TestCase
         $userAdmin->expects($this->once())
             ->method('send')
             ->willThrowException($exception);
-        $this->setExpectedException(UserException::class, $exception);
+
+        $this->expectException(UserException::class);
 
         $userAdmin->edit($userEntity, $userEntity);
     }
@@ -190,7 +190,8 @@ class UserAdminTest extends TestCase
         $exception = new \Exception('exception', 0, $badResponse);
 
         $userAdmin->expects($this->once())->method('send')->willThrowException($exception);
-        $this->setExpectedException(UserException::class, 'error');
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage('error');
 
         $userAdmin->edit($userEntity, $userEntity);
     }
@@ -225,7 +226,8 @@ class UserAdminTest extends TestCase
 
         $exception = new UserException();
         $userAdmin->expects($this->once())->method('send')->willThrowException($exception);
-        $this->setExpectedException(UserException::class, $exception);
+
+        $this->expectException(UserException::class);
 
         $userAdmin->delete($userEntity);
     }
@@ -249,7 +251,9 @@ class UserAdminTest extends TestCase
         $exception = new \Exception('exception', 0, $badResponse);
 
         $userAdmin->expects($this->once())->method('send')->willThrowException($exception);
-        $this->setExpectedException(UserException::class, 'error');
+
+        $this->expectException(UserException::class);
+        $this->expectExceptionMessage('error');
 
         $userAdmin->delete($userEntity);
     }
