@@ -5,7 +5,6 @@ namespace Test\Fei\Service\Connect\Client;
 use Doctrine\Common\Collections\ArrayCollection;
 use Fei\Service\Connect\Client\Connect;
 use Fei\Service\Connect\Client\Exception\UserAttributionException;
-use Fei\Service\Connect\Client\UserAttribution;
 use Fei\Service\Connect\Common\Entity\Application;
 use Fei\Service\Connect\Common\Entity\Attribution;
 use Fei\Service\Connect\Common\Entity\Role;
@@ -55,7 +54,7 @@ class ConnectTest extends TestCase
             ->getMock();
         $connect->method('isAuthenticated')->willReturn(false);
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $connect->switchLocalUsername('test', 'USER');
     }
 
@@ -99,7 +98,7 @@ class ConnectTest extends TestCase
         $connect->method('getConfig')->willReturn($config);
         $connect->method('setUser');
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $connect->switchLocalUsername('test', 'USER');
     }
 
@@ -172,7 +171,7 @@ class ConnectTest extends TestCase
             ->getMock();
         $connect->method('isAuthenticated')->willReturn(false);
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $connect->switchRole('USER');
     }
 
@@ -216,7 +215,7 @@ class ConnectTest extends TestCase
         $connect->method('getConfig')->willReturn($config);
         $connect->method('setUser');
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $connect->switchRole('USER');
     }
 
