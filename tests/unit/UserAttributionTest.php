@@ -232,7 +232,7 @@ class UserAttributionTest extends TestCase
             new \Exception('', 0)
         );
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $userAttribution->add('boris', 'http://filer.flash-global.net', 'ADMIN', true, 'test');
     }
 
@@ -253,7 +253,7 @@ class UserAttributionTest extends TestCase
             )
         );
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $userAttribution->add('boris', 'http://filer.flash-global.com', 'ADMIN', true, 'test');
     }
 
@@ -364,7 +364,7 @@ class UserAttributionTest extends TestCase
             new \Exception('', 0)
         );
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $userAttribution->get('boris');
     }
 
@@ -385,7 +385,7 @@ class UserAttributionTest extends TestCase
             )
         );
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $userAttribution->get('boris');
     }
 
@@ -408,7 +408,7 @@ class UserAttributionTest extends TestCase
             new \Exception('', 0)
         );
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $userAttribution->remove('boris', '28', '1');
     }
 
@@ -429,7 +429,7 @@ class UserAttributionTest extends TestCase
             )
         );
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $userAttribution->remove('boris', '28', '1');
     }
 
@@ -452,7 +452,7 @@ class UserAttributionTest extends TestCase
             new \Exception('', 0)
         );
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $userAttribution->removeAll('boris', '28');
     }
 
@@ -473,7 +473,7 @@ class UserAttributionTest extends TestCase
             )
         );
 
-        $this->setExpectedException(UserAttributionException::class);
+        $this->expectException(UserAttributionException::class);
         $userAttribution->removeAll('boris', 'http://filer.flash-global.net');
     }
 }
