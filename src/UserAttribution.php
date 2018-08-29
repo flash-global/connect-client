@@ -7,6 +7,7 @@ use Fei\ApiClient\RequestDescriptor;
 use Fei\ApiClient\Transport\BasicTransport;
 use Fei\Service\Connect\Client\Exception\UserAttributionException;
 use Fei\Service\Connect\Common\Entity\Application;
+use Fei\Service\Connect\Common\Entity\ApplicationGroup;
 use Fei\Service\Connect\Common\Entity\Attribution;
 use Fei\Service\Connect\Common\Entity\Role;
 use Fei\Service\Connect\Common\Entity\User;
@@ -37,29 +38,28 @@ class UserAttribution extends AbstractApiClient
     /**
      * Add an Attribution
      *
-     * @param string $username
-     * @param string $application
-     * @param string $role
-     * @param bool $isDefault
-     * @param string|null $localUsername
+     * @param int $sourceId
+     * @param int $targetId
+     * @param int $roleId
      *
      * @return Attribution|null
      */
-    public function add($username, $application, $role, $isDefault = false, $localUsername = null)
+    public function add($sourceId, $targetId, $roleId)
     {
-        $attribution = $this->constructAttribution($username, $application, $role, $localUsername);
-        $attribution->setIsDefault($isDefault);
-
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::IDP_ATTRIBUTIONS_API))
             ->setMethod('POST');
+
         $request->setBodyParams([
-            'data' => json_encode([$attribution->toArray()])
+            'data' => json_encode([
+                'source_id' => $sourceId,
+                'target_id' => $targetId,
+                'role_id' => $roleId,
+            ])
         ]);
 
         try {
             $response = json_decode($this->send($request)->getBody(), true);
-
             return (count($response['added']) > 0 ? reset($response['added']) : null);
         } catch (\Exception $e) {
             $previous = $e->getPrevious();
@@ -77,16 +77,16 @@ class UserAttribution extends AbstractApiClient
     /**
      * Get an User Attributions
      *
-     * @param string $username
-     * @param string|null $application
+     * @param int $sourceId
+     * @param int|null $targetId
      *
      * @return Attribution[]
      */
-    public function get($username, $application = null)
+    public function get($sourceId, $targetId = null)
     {
-        $url = self::IDP_ATTRIBUTIONS_API . '/' . $username;
-        if ($application) {
-            $url .= '?application=' . urlencode($application);
+        $url = self::IDP_ATTRIBUTIONS_API . '/' . $sourceId;
+        if ($targetId) {
+            $url .= '?target=' . urlencode($targetId);
         }
 
         $request = (new RequestDescriptor())
@@ -109,21 +109,24 @@ class UserAttribution extends AbstractApiClient
     }
 
     /**
-     * Remove an Attribution
+     * Remove attributions for a user. An application and a role can be defined to target more attributions more
+     * precisely.
      *
-     * @param string $username
-     * @param string $application
-     * @param string $role
-     * @param string|null $localUsername
+     * @param int $sourceId
+     * @param int $targetId
+     * @param int $roleId
+     *   If omitted, all attributions link to this source / target will be deleted.
      */
-    public function remove($username, $application, $role, $localUsername = null)
+    public function remove($sourceId, $targetId = null, $roleId = null)
     {
-        $attribution = $this->constructAttribution($username, $application, $role, $localUsername);
-
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::IDP_ATTRIBUTIONS_API))
             ->setMethod('DELETE')
-            ->setRawData(json_encode([$attribution->toArray()]));
+            ->setRawData(json_encode([
+                'source_id' => $sourceId,
+                'target_id' => $targetId,
+                'role_id' => $roleId,
+            ]));
 
         try {
             $this->send($request);
@@ -138,83 +141,5 @@ class UserAttribution extends AbstractApiClient
 
             throw new UserAttributionException($e->getMessage(), $e->getCode(), $e->getPrevious());
         }
-    }
-
-    /**
-     * Remove several User Attributions
-     *
-     * @param string $username
-     * @param string|null $application
-     */
-    public function removeAll($username, $application = null)
-    {
-        $url = self::IDP_ATTRIBUTIONS_API . '/' . $username;
-        if ($application) {
-            $url .= '?application=' . urlencode($application);
-        }
-
-        $request = (new RequestDescriptor())
-            ->setUrl($this->buildUrl($url))
-            ->setMethod('DELETE');
-
-        try {
-            $this->send($request);
-        } catch (\Exception $e) {
-            $previous = $e->getPrevious();
-
-            if ($previous instanceof BadResponseException) {
-                $error = json_decode($previous->getResponse()->getBody(), true);
-
-                throw new UserAttributionException($error['error'], $error['code'], $previous);
-            }
-
-            throw new UserAttributionException($e->getMessage(), $e->getCode(), $e->getPrevious());
-        }
-    }
-
-    /**
-     * Construct an Attribution entity from several parameters
-     *
-     * @param string $username
-     * @param string $application
-     * @param string $role
-     * @param string|null $localUsername
-     *
-     * @return Attribution
-     */
-    protected function constructAttribution($username, $application, $role, $localUsername = null)
-    {
-        $attributionUser = (new User())
-            ->setUserName($username);
-        if ($localUsername) {
-            $attributionUser->setLocalUsername($localUsername);
-        }
-
-        $attributionApplication = (new Application());
-        if ($localUsername) {
-            $attributionApplication->setName($application);
-        } elseif (is_numeric($application) && (int) $application == $application) {
-            $attributionApplication->setId((int) $application);
-        } elseif (filter_var($application, FILTER_VALIDATE_URL)) {
-            $attributionApplication->setUrl($application);
-        } else {
-            $attributionApplication->setName($application);
-        }
-
-        $attributionRole = (new Role());
-        if ($localUsername) {
-            $attributionRole->setRole($application . ':' . $role . ':' . $localUsername);
-        } elseif (is_numeric($role) && (int) $role == $role) {
-            $attributionRole->setId((int) $role);
-        } else {
-            $attributionRole->setRole($role);
-        }
-
-        $attribution = (new Attribution())
-            ->setUser($attributionUser)
-            ->setApplication($attributionApplication)
-            ->setRole($attributionRole);
-
-        return $attribution;
     }
 }
