@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "0d8fc6c3b6f06181fe76bc6cd0a17172",
+    "content-hash": "5757f202542a6db3229119f288855e2b",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -335,16 +335,16 @@
         },
         {
             "name": "fei/connect-common",
-            "version": "v3.0.0",
+            "version": "v3.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/flash-global/connect-common.git",
-                "reference": "efc687c5b9fd99738f12e39ff9961106b830b780"
+                "reference": "11cfd2498e0ff4cd73575adb88311fd149243470"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/flash-global/connect-common/zipball/efc687c5b9fd99738f12e39ff9961106b830b780",
-                "reference": "efc687c5b9fd99738f12e39ff9961106b830b780",
+                "url": "https://api.github.com/repos/flash-global/connect-common/zipball/11cfd2498e0ff4cd73575adb88311fd149243470",
+                "reference": "11cfd2498e0ff4cd73575adb88311fd149243470",
                 "shasum": ""
             },
             "require": {
@@ -360,6 +360,8 @@
             },
             "require-dev": {
                 "codeception/codeception": "~2.4",
+                "jakub-onderka/php-parallel-lint": "^1.0",
+                "phpro/grumphp": "^0.14.1",
                 "squizlabs/php_codesniffer": "^3.2"
             },
             "type": "library",
@@ -380,7 +382,7 @@
                 }
             ],
             "description": "Flash Connect common components",
-            "time": "2018-06-04T14:38:05+00:00"
+            "time": "2018-08-24T15:13:01+00:00"
         },
         {
             "name": "fei/entities",
@@ -394,7 +396,7 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/flash-global/entities/zipball/e94f315cd85b5f9a24239837161f6fca005757f5",
                 "reference": "e94f315cd85b5f9a24239837161f6fca005757f5",
-                "shasum": ""
+                "shasum": "173c4470e7491d39f3ad16c0a5670177d2ad2da2"
             },
             "require-dev": {
                 "codeception/codeception": "^2.2",
@@ -407,7 +409,6 @@
                     "Fei\\Entity\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-3.0"
             ],
@@ -419,6 +420,10 @@
                 }
             ],
             "description": "Entities descriptors and helpers",
+            "support": {
+                "source": "https://github.com/flash-global/entities/tree/v1.1.7",
+                "issues": "https://github.com/flash-global/entities/issues"
+            },
             "time": "2018-03-15T15:38:58+00:00"
         },
         {

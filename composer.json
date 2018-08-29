@@ -15,9 +15,15 @@
       "Fei\\Service\\Connect\\Client\\": "src"
     }
   },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://composer.flash.global"
+    }
+  ],
   "require": {
     "php": ">=7.0",
-    "fei/connect-common": "~3.0.0",
+    "fei/connect-common": "^3.0.0",
     "fei/api-client": "~1.2.0",
     "lightsaml/lightsaml": "^1.2",
     "nikic/fast-route": "^1.0",
