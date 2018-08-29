@@ -432,48 +432,4 @@ class UserAttributionTest extends TestCase
         $this->expectException(UserAttributionException::class);
         $userAttribution->remove('boris', '28', '1');
     }
-
-    public function testRemoveAll()
-    {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods(['send'])
-            ->getMock();
-        $userAttribution->expects($this->once())->method('send');
-
-        $userAttribution->removeAll('boris', '28');
-    }
-
-    public function testRemoveAllUserAttributionException()
-    {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods(['send'])
-            ->getMock();
-        $userAttribution->expects($this->once())->method('send')->willThrowException(
-            new \Exception('', 0)
-        );
-
-        $this->expectException(UserAttributionException::class);
-        $userAttribution->removeAll('boris', '28');
-    }
-
-    public function testRemoveAllBadResponseException()
-    {
-        $userAttribution = $this->getMockBuilder(UserAttribution::class)
-            ->setMethods(['send'])
-            ->getMock();
-        $userAttribution->expects($this->once())->method('send')->willThrowException(
-            new \Exception(
-                '',
-                0,
-                new BadResponseException(
-                    'BadResponseException',
-                    new Request('GET', 'test'),
-                    new Response(500)
-                )
-            )
-        );
-
-        $this->expectException(UserAttributionException::class);
-        $userAttribution->removeAll('boris', 'http://filer.flash-global.net');
-    }
 }
