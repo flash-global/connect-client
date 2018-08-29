@@ -487,7 +487,7 @@ class Connect
                 /** @var Attribution $attribution **/
                 foreach ($this->getUser()->getAttributions() as $attribution) {
                     if ($attribution->getRole()->getRole() == $role
-                        && $attribution->getApplication()->getUrl() == $entityId
+                        && $attribution->getTarget()->getUrl() == $entityId
                     ) {
                         $isRole = true;
                     }
@@ -527,7 +527,7 @@ class Connect
                 /** @var Attribution $attribution **/
                 foreach ($this->getUser()->getAttributions() as $attribution) {
                     $pattern = '/:' . $role . ':' . $localUsername . '/';
-                    if ($application == $attribution->getApplication()->getUrl()
+                    if ($application == $attribution->getTarget()->getUrl()
                         && preg_match($pattern, $attribution->getRole()->getRole())
                     ) {
                         $switchedRole = $attribution->getRole();
