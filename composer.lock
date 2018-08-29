@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "ee5a1a32e3a6eb24ac69041d7bbc4d1c",
+    "content-hash": "e880c19ec515768f5d4047d16d585a1f",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -293,7 +293,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/flash-global/api-client/zipball/0e0911feccf62d6c1c00c51d3a14cc989151d252",
+                "url": "https://composer.flash.global/dist/fei-api-client-0e0911feccf62d6c1c00c51d3a14cc989151d252-zip-103758.zip",
                 "reference": "0e0911feccf62d6c1c00c51d3a14cc989151d252",
                 "shasum": "520c85c612116c13d1625cc044c53c85de7c7689"
             },
@@ -335,16 +335,16 @@
         },
         {
             "name": "fei/connect-common",
-            "version": "v3.0.0",
+            "version": "dev-m2m",
             "source": {
                 "type": "git",
-                "url": "https://github.com/flash-global/connect-common.git",
-                "reference": "efc687c5b9fd99738f12e39ff9961106b830b780"
+                "url": "git@github.com:opcoding/connect-common.git",
+                "reference": "b9667bb04d1d09444f5181c636c122f3dd48610c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/flash-global/connect-common/zipball/efc687c5b9fd99738f12e39ff9961106b830b780",
-                "reference": "efc687c5b9fd99738f12e39ff9961106b830b780",
+                "url": "https://api.github.com/repos/opcoding/connect-common/zipball/b9667bb04d1d09444f5181c636c122f3dd48610c",
+                "reference": "b9667bb04d1d09444f5181c636c122f3dd48610c",
                 "shasum": ""
             },
             "require": {
@@ -368,7 +368,6 @@
                     "Fei\\Service\\Connect\\Common\\": "src"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-3.0"
             ],
@@ -380,7 +379,10 @@
                 }
             ],
             "description": "Flash Connect common components",
-            "time": "2018-06-04T14:38:05+00:00"
+            "support": {
+                "source": "https://github.com/opcoding/connect-common/tree/m2m"
+            },
+            "time": "2018-08-02T07:16:50+00:00"
         },
         {
             "name": "fei/entities",
@@ -392,9 +394,9 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/flash-global/entities/zipball/e94f315cd85b5f9a24239837161f6fca005757f5",
+                "url": "https://composer.flash.global/dist/fei-entities-e94f315cd85b5f9a24239837161f6fca005757f5-zip-55d2d0.zip",
                 "reference": "e94f315cd85b5f9a24239837161f6fca005757f5",
-                "shasum": ""
+                "shasum": "173c4470e7491d39f3ad16c0a5670177d2ad2da2"
             },
             "require-dev": {
                 "codeception/codeception": "^2.2",
@@ -407,7 +409,6 @@
                     "Fei\\Entity\\": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-3.0"
             ],
@@ -419,6 +420,10 @@
                 }
             ],
             "description": "Entities descriptors and helpers",
+            "support": {
+                "source": "https://github.com/flash-global/entities/tree/v1.1.7",
+                "issues": "https://github.com/flash-global/entities/issues"
+            },
             "time": "2018-03-15T15:38:58+00:00"
         },
         {
@@ -4135,9 +4140,18 @@
             "time": "2018-01-29T19:49:41+00:00"
         }
     ],
-    "aliases": [],
+    "aliases": [
+        {
+            "alias": "v2.2.25",
+            "alias_normalized": "2.2.25.0",
+            "version": "dev-m2m",
+            "package": "fei/connect-common"
+        }
+    ],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "fei/connect-common": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
