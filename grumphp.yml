@@ -1,0 +1,11 @@
+parameters:
+    git_dir: .
+    bin_dir: vendor/bin
+    ascii:
+        succeeded: ~
+        failed: ~
+    tasks:
+        phplint: ~
+        phpcs:
+            encoding: UTF-8
+            standard: phpcs.xml
