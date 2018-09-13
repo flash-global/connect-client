@@ -1,0 +1,18 @@
+parameters:
+    git_dir: .
+    bin_dir: vendor/bin
+    tasks:
+        phplint:
+            triggered_by: ['php', 'inc', 'phtml']
+        phpcs:
+            encoding: UTF-8
+            triggered_by: ['php', 'inc', 'phtml']
+            whitelist_patterns:
+                - /^app\/(.*)/
+                - /^tests\/unit\/(.*)/
+                - /^features\/context\/(.*)/
+        codeception:
+            config_file: ~
+            fail_fast: false
+            suite: unit
+            test: ~
