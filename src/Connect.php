@@ -83,15 +83,17 @@ class Connect
             session_start();
         }
 
-        if (isset($_SESSION['user'])) {
-            $this->setUser(new User($_SESSION['user']));
-        }
-
-        if (isset($_SESSION['session_index'])) {
-            $this->setSessionIndex($_SESSION['session_index']);
-        }
-
         $this->setConfig($config);
+
+        $session = $_SESSION[self::class][$this->getConfig()->getEntityID()] ?? [];
+
+        if (isset($session['user'])) {
+            $this->setUser(new User($session['user']));
+        }
+
+        if (isset($session['session_index'])) {
+            $this->setSessionIndex($session['session_index']);
+        }
 
         $this->init();
 
@@ -156,9 +158,9 @@ class Connect
     {
         $this->user = $user;
 
-        unset($_SESSION['user']);
+        unset($_SESSION[self::class][$this->getConfig()->getEntityID()]['user']);
 
-        $_SESSION['user'] = $this->user->toArray();
+        $_SESSION[self::class][$this->getConfig()->getEntityID()]['user'] = $this->user->toArray();
         $this->setRole($this->user->getCurrentRole());
         $this->setLocalUsername($this->user->getLocalUsername());
 
@@ -186,8 +188,8 @@ class Connect
     {
         $this->sessionIndex = $sessionIndex;
 
-        unset($_SESSION['session_index']);
-        $_SESSION['session_index'] = $sessionIndex;
+        unset($_SESSION[self::class][$this->getConfig()->getEntityID()]['session_index']);
+        $_SESSION[self::class][$this->getConfig()->getEntityID()]['session_index'] = $sessionIndex;
 
         return $this;
     }
@@ -396,11 +398,11 @@ class Connect
             }
         } elseif (!$this->isAuthenticated()) {
             if (strtoupper($requestMethod) == 'GET') {
-                $_SESSION['targeted_path'] = $requestUri;
+                $_SESSION[self::class][$this->getConfig()->getEntityID()]['targeted_path'] = $requestUri;
             }
 
             $request = $this->getSaml()->buildAuthnRequest();
-            $_SESSION['SAML_RelayState'] = $request->getRelayState();
+            $_SESSION[self::class][$this->getConfig()->getEntityID()]['SAML_RelayState'] = $request->getRelayState();
 
             $this->setResponse($this->getSaml()->getHttpRedirectBindingResponse($request));
         }
