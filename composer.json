@@ -25,6 +25,9 @@
       "url": "git@github.com:flash-global/api-client.git"
     }
   ],
+  "platform": {
+    "php": "7.0.18"
+  },
   "require": {
     "php": ">=7.0",
     "fei/connect-common": "^3.0.0",
