@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5757f202542a6db3229119f288855e2b",
+    "content-hash": "f7f3c3da19c01a761fee919996bda22e",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -285,17 +285,17 @@
         },
         {
             "name": "fei/api-client",
-            "version": "v1.2.7",
+            "version": "v1.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/flash-global/api-client.git",
-                "reference": "0e0911feccf62d6c1c00c51d3a14cc989151d252"
+                "reference": "f925992cbda504a466a8cb36f0e7f509a4a5b53f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/flash-global/api-client/zipball/0e0911feccf62d6c1c00c51d3a14cc989151d252",
-                "reference": "0e0911feccf62d6c1c00c51d3a14cc989151d252",
-                "shasum": "520c85c612116c13d1625cc044c53c85de7c7689"
+                "url": "https://api.github.com/repos/flash-global/api-client/zipball/f925992cbda504a466a8cb36f0e7f509a4a5b53f",
+                "reference": "f925992cbda504a466a8cb36f0e7f509a4a5b53f",
+                "shasum": ""
             },
             "require": {
                 "fei/entities": "1.*",
@@ -305,6 +305,8 @@
             "require-dev": {
                 "codeception/aspect-mock": "*",
                 "codeception/codeception": "^2.2",
+                "jakub-onderka/php-parallel-lint": "^1.0",
+                "phpro/grumphp": "^0.14.2",
                 "squizlabs/php_codesniffer": "3.*"
             },
             "bin": [
@@ -316,6 +318,7 @@
                     "Fei\\ApiClient\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-3.0"
             ],
@@ -327,11 +330,7 @@
                 }
             ],
             "description": "Client side API helpers",
-            "support": {
-                "source": "https://github.com/flash-global/api-client/tree/master",
-                "issues": "https://github.com/flash-global/api-client/issues"
-            },
-            "time": "2018-03-15T16:08:51+00:00"
+            "time": "2018-09-20T15:13:53+00:00"
         },
         {
             "name": "fei/connect-common",
