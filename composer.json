@@ -17,8 +17,12 @@
   },
   "repositories": [
     {
-      "type": "composer",
-      "url": "https://composer.flash.global"
+      "type": "git",
+      "url": "git@github.com:flash-global/connect-common.git"
+    },
+    {
+      "type": "git",
+      "url": "git@github.com:flash-global/api-client.git"
     }
   ],
   "require": {
