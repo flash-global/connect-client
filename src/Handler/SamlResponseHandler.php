@@ -32,7 +32,7 @@ class SamlResponseHandler
 
         $connect->getSaml()->validateResponse(
             $response,
-            isset($_SESSION[self::class][$connect->getConfig()->getEntityID()]['SAML_RelayState'])
+            isset($_SESSION[Connect::class][$connect->getConfig()->getEntityID()]['SAML_RelayState'])
                 ? $_SESSION['SAML_RelayState']
                 : null
         );
@@ -46,12 +46,12 @@ class SamlResponseHandler
             $connect->setSessionIndex($assertion->getFirstAuthnStatement()->getSessionIndex());
         }
 
-        $targetedPath = isset($_SESSION[self::class][$connect->getConfig()->getEntityID()]['targeted_path'])
-            ? $_SESSION[self::class][$connect->getConfig()->getEntityID()]['targeted_path']
+        $targetedPath = isset($_SESSION[Connect::class][$connect->getConfig()->getEntityID()]['targeted_path'])
+            ? $_SESSION[Connect::class][$connect->getConfig()->getEntityID()]['targeted_path']
             : $connect->getConfig()->getDefaultTargetPath();
 
-        unset($_SESSION[self::class][$connect->getConfig()->getEntityID()]['targeted_path']);
-        unset($_SESSION[self::class][$connect->getConfig()->getEntityID()]['SAML_RelayState']);
+        unset($_SESSION[Connect::class][$connect->getConfig()->getEntityID()]['targeted_path']);
+        unset($_SESSION[Connect::class][$connect->getConfig()->getEntityID()]['SAML_RelayState']);
 
         return new RedirectResponse($targetedPath);
     }
