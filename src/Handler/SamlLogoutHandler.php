@@ -29,7 +29,7 @@ class SamlLogoutHandler
 
         if ($request) {
             $connect->getSaml()->validateLogoutRequest($request, $connect->getUser());
-
+            $this->deleteSessionCookie();
             session_destroy();
 
             return $connect->getSaml()->getHttpPostBindingResponse(
@@ -41,7 +41,7 @@ class SamlLogoutHandler
 
         if ($response) {
             $connect->getSaml()->validateLogoutResponse($response);
-
+            $this->deleteSessionCookie();
             session_destroy();
 
             return new RedirectResponse($connect->getConfig()->getLogoutTargetPath());
@@ -50,5 +50,15 @@ class SamlLogoutHandler
         return $connect->getSaml()->getHttpPostBindingResponse(
             $connect->getSaml()->prepareLogoutRequest($connect->getUser(), $connect->getSessionIndex())
         );
+    }
+
+    /**
+     * @return bool
+     */
+    public function deleteSessionCookie(): bool
+    {
+        $params = session_get_cookie_params();
+
+        return setcookie(session_name(), session_id(), time() - 1, $params['domain'], $params['secure'], $params['httponly']);
     }
 }
