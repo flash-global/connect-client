@@ -13,16 +13,17 @@ interface UserAdminInterface
      * Persist a user entity
      *
      * @param User $user
+     *
      * @return User
      */
     public function persist(User $user);
 
     /**
-     * Delete a user entity
+     * Delete a user entity by entity, its username or email
      *
-     * @param $user
+     * @param User|string $user
      */
-    public function delete(User $user);
+    public function delete($user);
 
     /**
      * Edit a user entity with another one
@@ -35,10 +36,11 @@ interface UserAdminInterface
     public function edit(User $formerUser, User $newUser);
 
     /**
-     * Retrieve a user entity
+     * Retrieve a user entity by its username or email
      *
-     * @param $username
+     * @param string $user
+     *
      * @return User
      */
-    public function retrieve($username);
+    public function retrieve(string $user);
 }
