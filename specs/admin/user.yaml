@@ -1,0 +1,237 @@
+openapi: 3.0.2
+info:
+    title: Connect User Admin API
+    version: 3.0.0
+servers:
+    - url: https://admin-connect.redspher.com/api/v3
+      description: Procuction
+    - url: https://admin-connect.test.redspher.com/api/v3
+      description: Test
+paths:
+    /users:
+        post:
+            summary: Create a User entity instance
+            tags:
+                - User
+            operationId: createUser
+            requestBody:
+                required: true
+                description: The User entity instance to create
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/User"
+                        example:
+                          {
+                              "user_name": "ftaggart",
+                              "email": "ftaggart@idsoftware.com",
+                              "first_name": "Flynn",
+                              "last_name": "Taggart",
+                              "user_groups": [
+                              {
+                                  "name": "Carrier"
+                              }
+                              ]
+                          }
+            responses:
+                201:
+                    description: The User instace created
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/User"
+                400:
+                    description: Validation error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ValidationError"
+                500:
+                    description: Unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+    /users/{user}:
+        parameters:
+            - name: user
+              in: path
+              required: true
+              description: The username or email of the User entity instance to retreive
+              schema:
+                  type: string
+              examples:
+                  username:
+                      value: ftaggart
+                  email:
+                      value: ftaggart@idsoftware.com
+        get:
+            summary: Find a User entity instance by its username or email
+            tags:
+                - User
+            operationId: findUser
+
+            responses:
+                200:
+                    description: User entity instance found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/User"
+                404:
+                    description: User entity instance not found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                            example:
+                              {
+                                  "code": 404,
+                                  "message": "User instance not found"
+                              }
+                500:
+                    description: Unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+        put:
+            summary: Update a User entity instance with a new one
+            tags:
+                - User
+            operationId: editUser
+            requestBody:
+                required: true
+                description: The new User entity instance
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/User"
+                        example:
+                          {
+                              "user_name": "ftaggart",
+                              "email": "ftaggart@idsoftware.com",
+                              "first_name": "Flynn",
+                              "last_name": "Taggart",
+                              "user_groups": [
+                              {
+                                  "name": "Carrier"
+                              }
+                              ]
+                          }
+            responses:
+                200:
+                    description: The User instace updated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/User"
+                400:
+                    description: Validation error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ValidationError"
+                404:
+                    description: User entity instance not found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                            example:
+                              {
+                                  "code": 404,
+                                  "message": "User instance not found"
+                              }
+                500:
+                    description: Unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+components:
+    schemas:
+        User:
+            type: object
+            required:
+                - username
+                - email
+            properties:
+                user_name:
+                    type: string
+                    description: The User username. Must be unique.
+                    example: ftaggart
+                email:
+                    type: string
+                    description: The User email. Must be unique.
+                    example: ftaggart@idsoftware.com
+                created_at:
+                    type: string
+                    format: date-time
+                status:
+                    type: integer
+                    format: int32
+                    default: 1
+                    enum: [0, 1, 2, 3]
+                    description: >
+                        Status are:
+                          * `0`: Soft deleted
+                          * `1`: Pending
+                          * `2`: Active
+                          * `3`: Suspended
+                first_name:
+                    type: string
+                    example: Flynn
+                last_name:
+                    type: string
+                    example: Taggart
+                language:
+                    type: string
+                    description: Any ISO 639-1 Code. `en` by default.
+                    default: "en"
+                    example: "fr"
+                user_groups:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/UserGroup"
+        UserGroup:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: The name of the user group. Must be unique.
+        Error:
+            type: object
+            required:
+                - code
+                - message
+            properties:
+                code:
+                    type: integer
+                    format: int32
+                    example: 500
+                message:
+                    type: string
+                    example: Unexpected error occured
+        ValidationError:
+            type: object
+            required:
+                - errors
+            properties:
+                errors:
+                    type: array
+                    items:
+                        type: object
+                        required:
+                            - property
+                            - message
+                        properties:
+                            property:
+                                type: string
+                                description:
+                                    The property name that error message belong to.
+
+                                    The RFC 6901 - JavaScript Object Notation (JSON) Pointer (https://tools.ietf.org/html/rfc6901) could be used for pointing a value of a specific property.
+                            message:
+                                type: string
+                                description: The human reading error description

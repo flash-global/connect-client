@@ -1,6 +1,6 @@
 <?php
 
-namespace Fei\Service\Connect\Client;
+namespace Fei\Service\Connect\Client\Admin;
 
 use Fei\Service\Connect\Common\Entity\User;
 
@@ -16,7 +16,7 @@ interface UserAdminInterface
      *
      * @return User
      */
-    public function persist(User $user);
+    public function create(User $user);
 
     /**
      * Delete a user entity by entity, its username or email
@@ -29,11 +29,11 @@ interface UserAdminInterface
      * Edit a user entity with another one
      *
      * @param User $formerUser
-     * @param User $newUser
+     * @param User $newNewUser
      *
      * @return User
      */
-    public function edit(User $formerUser, User $newUser);
+    public function edit(User $formerUser, User $newNewUser);
 
     /**
      * Retrieve a user entity by its username or email
