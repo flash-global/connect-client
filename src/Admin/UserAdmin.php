@@ -112,6 +112,36 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     }
 
     /**
+     * Generate a reset password token by user email or username
+     *
+     * @param string $user
+     * @return string
+     *
+     * @throws UserAdminException
+     * @throws ApiClientException
+     */
+    public function generateResetPasswordToken(string $user): string
+    {
+        $request = (new RequestDescriptor())
+            ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO . "/" . $user . "/password/reset-token"))
+            ->setMethod("GET")
+        ;
+
+        try {
+            $content = $this->send($request);
+            $decodedContent = json_decode($content->getBody(), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new UserAdminException(json_last_error_msg(), json_last_error());
+            }
+
+            return $decodedContent['token'];
+        } catch (Throwable $exception) {
+            throw $this->parseSendException($exception);
+        }
+    }
+
+    /**
      * @param RequestDescriptor $request
      */
     protected function addAuthorization(RequestDescriptor $request)

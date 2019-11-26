@@ -3,6 +3,7 @@
 namespace Test\Fei\Service\Connect\Client\Admin;
 
 use DateTime;
+use Exception;
 use Fei\ApiClient\ApiClientException;
 use Fei\ApiClient\RequestDescriptor;
 use Fei\Service\Connect\Client\Admin\UserAdmin;
@@ -159,12 +160,12 @@ class UserAdminTest extends TestCase
      * @throws ApiClientException
      * @throws UserAdminException
      * @throws ValidatorException
+     * @throws Exception
      */
     public function testCreateSuccess()
     {
         $user = new User();
         $userData = $user->toArray();
-        unset($userData['profile_associations']);
 
         /** @var MockObject|ResponseInterface $psrResponseMock */
         $psrResponseMock = $this->createMock(ResponseInterface::class);
@@ -299,13 +300,13 @@ class UserAdminTest extends TestCase
      * @throws ApiClientException
      * @throws UserAdminException
      * @throws ValidatorException
+     * @throws Exception
      */
     public function testEditSuccess()
     {
         $username = "user1";
         $user = (new User())->setUserName($username);
         $userData = $user->toArray();
-        unset($userData['profile_associations']);
 
         /** @var MockObject|ResponseInterface $psrResponseMock */
         $psrResponseMock = $this->createMock(ResponseInterface::class);
@@ -385,13 +386,13 @@ class UserAdminTest extends TestCase
      * @throws ApiClientException
      * @throws UserAdminException
      * @throws ValidatorException
+     * @throws Exception
      */
     public function testRetrieveSuccess()
     {
         $username = "user1";
         $user = new User();
         $userData = $user->toArray();
-        unset($userData['profile_associations']);
 
         /** @var MockObject|ResponseInterface $psrResponseMock */
         $psrResponseMock = $this->createMock(ResponseInterface::class);
@@ -427,5 +428,121 @@ class UserAdminTest extends TestCase
         $result->setCreatedAt($dateTime);
 
         $this->assertEquals($user, $result);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws UserAdminException
+     * @throws ValidatorException
+     */
+    public function testGenerateResetPasswordTokenError500()
+    {
+        $user = 'user1';
+
+        /** @var MockObject|RequestInterface $psrRequestMock */
+        $psrRequestMock = $this->createMock(RequestInterface::class);
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getStatusCode')
+            ->willReturn(500);
+
+        $requestException = new RequestException("Error 1", $psrRequestMock, $psrResponseMock);
+        $apiClientException = new ApiClientException("Error  2", 0, $requestException);
+        $userAdminException = new UserAdminException("Error 1", 500, $requestException);
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/$user/password/reset-token")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willThrowException($apiClientException)
+        ;
+
+        $this->expectExceptionObject($userAdminException);
+        $this->instance->generateResetPasswordToken($user);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws UserAdminException
+     * @throws ValidatorException
+     */
+    public function testGenerateResetPasswordTokenError404()
+    {
+        $user = 'user1';
+
+        /** @var MockObject|RequestInterface $psrRequestMock */
+        $psrRequestMock = $this->createMock(RequestInterface::class);
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getStatusCode')
+            ->willReturn(404);
+
+        $requestException = new RequestException("Error 1", $psrRequestMock, $psrResponseMock);
+        $apiClientException = new ApiClientException("Error  2", 0, $requestException);
+        $userAdminException = new UserAdminException("Error 1", 404, $requestException);
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/$user/password/reset-token")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willThrowException($apiClientException)
+        ;
+
+        $this->expectExceptionObject($userAdminException);
+        $this->instance->generateResetPasswordToken($user);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws UserAdminException
+     * @throws ValidatorException
+     * @throws Exception
+     */
+    public function testGenerateResetPasswordTokenSuccess()
+    {
+        $username = "user1";
+        $token = "1234";
+        $tokenData = ['token' => $token];
+
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+        /** @var MockObject|Str $psrStreamMock */
+        $psrStreamMock = $this->createMock(StreamInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getBody')
+            ->willReturn($psrStreamMock)
+        ;
+
+        $psrStreamMock->expects($this->once())
+            ->method('__toString')
+            ->willReturn(json_encode($tokenData))
+        ;
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/$username/password/reset-token")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willReturn($psrResponseMock)
+        ;
+
+        $result = $this->instance->generateResetPasswordToken($username);
+        $this->assertEquals($token, $result);
     }
 }

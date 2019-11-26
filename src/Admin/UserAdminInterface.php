@@ -43,4 +43,12 @@ interface UserAdminInterface
      * @return User
      */
     public function retrieve(string $user);
+
+    /**
+     * Generate a reset password token by user email or username
+     *
+     * @param string $user
+     * @return string
+     */
+    public function generateResetPasswordToken(string $user): string;
 }
