@@ -38,17 +38,21 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * Persist a user entity
      *
      * @param User $user
+     * @param bool $sendValidationEmail
      *
      * @return User
      *
-     * @throws UserAdminException
      * @throws ApiClientException
-     * @throws ValidatorException
+     * @throws UserAdminException
      */
-    public function create(User $user)
+    public function create(User $user, bool $sendValidationEmail = true)
     {
+        $query = http_build_query([
+            'validation-email' => $sendValidationEmail,
+        ]);
+
         $request = (new RequestDescriptor())
-            ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO))
+            ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO) . '?' . $query)
             ->setMethod("POST")
             ->setRawData(json_encode($user->toArray()))
         ;

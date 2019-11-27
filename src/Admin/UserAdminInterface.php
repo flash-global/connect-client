@@ -13,10 +13,11 @@ interface UserAdminInterface
      * Persist a user entity
      *
      * @param User $user
+     * @param bool $sendValidationEmail
      *
      * @return User
      */
-    public function create(User $user);
+    public function create(User $user, bool $sendValidationEmail = true);
 
     /**
      * Delete a user entity by entity, its username or email
