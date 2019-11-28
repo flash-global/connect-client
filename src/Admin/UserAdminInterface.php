@@ -48,7 +48,7 @@ interface UserAdminInterface
     /**
      * Generate a reset password token by user email or username or user entity
      *
-     * @param string $user
+     * @param string|User $user
      * @return string
      */
     public function generateResetPasswordToken($user): string;
