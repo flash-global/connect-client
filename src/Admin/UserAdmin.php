@@ -150,6 +150,26 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     }
 
     /**
+     * Validate a reset password token and return a User entity instance
+     *
+     * @param string $token
+     *
+     * @return User
+     */
+    public function validateResetPasswordToken(string $token): User
+    {
+        $request = (new RequestDescriptor())
+            ->setUrl(
+                $this->buildUrl(self::API_USERS_PATH_INFO)
+                . '/password/reset-token?'
+                . http_build_query(['token' => $token])
+            )
+            ->setMethod("GET");
+
+        return $this->sendReturnUser($request);
+    }
+
+    /**
      * @param RequestDescriptor $request
      */
     protected function addAuthorization(RequestDescriptor $request)
@@ -162,6 +182,9 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
         $request->addHeader("Authorization", "Basic " . $credentials);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function send(RequestDescriptor $request, $flags = 0)
     {
         $this->addAuthorization($request);
@@ -230,7 +253,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     /**
      * @return string
      */
-    public function getUsername(): string
+    public function getUsername()
     {
         return $this->username;
     }
@@ -248,7 +271,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     /**
      * @return string
      */
-    public function getPassword(): string
+    public function getPassword()
     {
         return $this->password;
     }

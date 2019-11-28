@@ -7,9 +7,23 @@ servers:
       description: Procuction
     - url: https://admin-connect.test.redspher.com/api/v3
       description: Test
+security:
+    - BasicAuth: []
 paths:
     /users:
         post:
+            parameters:
+                - name: validation-email
+                  in: query
+                  schema:
+                      type: integer
+                      enum: [0, 1]
+                      default: 1
+                  required: false
+                  description: >
+                      Define if a validation registration email must be send:
+                        * `0`: Email is not send
+                        * `1`: Email is send
             summary: Create a User entity instance
             tags:
                 - User
@@ -54,23 +68,12 @@ paths:
                                 $ref: "#/components/schemas/Error"
     /users/{user}:
         parameters:
-            - name: user
-              in: path
-              required: true
-              description: The username or email of the User entity instance to retreive
-              schema:
-                  type: string
-              examples:
-                  username:
-                      value: ftaggart
-                  email:
-                      value: ftaggart@idsoftware.com
+            - $ref: "#/components/parameters/userParam"
         get:
             summary: Find a User entity instance by its username or email
             tags:
                 - User
             operationId: findUser
-
             responses:
                 200:
                     description: User entity instance found
@@ -149,6 +152,91 @@ paths:
                         application/json:
                             schema:
                                 $ref: "#/components/schemas/Error"
+    /users/{user}/password/reset-token:
+        parameters:
+            - $ref: "#/components/parameters/userParam"
+        get:
+            summary: Generate a token for reseting password
+            operationId: generateResetPasswordToken
+            tags:
+                - User
+            responses:
+                200:
+                    description: A reset password token generated
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ResetPasswordToken"
+                            example:
+                              {
+                                  "token": "thisismytoken"
+                              }
+                404:
+                    description: User entity instance not found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                            example:
+                              {
+                                  "code": 404,
+                                  "message": "User instance not found"
+                              }
+                500:
+                    description: Unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+    /users/password/reset-token:
+        parameters:
+            - in: query
+              name: token
+              required: true
+              description: The reset password token to validate
+              schema:
+                  type: string
+              example: myresetpasswordtoken
+        get:
+            summary: Validate a token for reseting password
+            operationId: validateResetPasswordToken
+            tags:
+                - User
+            responses:
+                200:
+                    description: The User instace linked into reset password token.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/User"
+                400:
+                    description: Unable to decrypt the reset password token
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                            example:
+                              {
+                                  "code": 400,
+                                  "message": "Reset password token is not valid"
+                              }
+                404:
+                    description: Unable to find User entity instance
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                            example:
+                              {
+                                  "code": 404,
+                                  "message": "User instance not found"
+                              }
+                500:
+                    description: Unexpected error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
 components:
     schemas:
         User:
@@ -185,6 +273,10 @@ components:
                 last_name:
                     type: string
                     example: Taggart
+                register_token:
+                    type: string
+                    description: Registration Token to provide on registration validation.
+                    example: 4b9ea159acb316fe9204e9164db22521
                 language:
                     type: string
                     description: Any ISO 639-1 Code. `en` by default.
@@ -200,6 +292,12 @@ components:
                 name:
                     type: string
                     description: The name of the user group. Must be unique.
+        ResetPasswordToken:
+            type: object
+            properties:
+                token:
+                    type: string
+                    description: The token for reseting a User password
         Error:
             type: object
             required:
@@ -235,3 +333,20 @@ components:
                             message:
                                 type: string
                                 description: The human reading error description
+    parameters:
+        userParam:
+            name: user
+            in: path
+            required: true
+            description: The username or email of the User entity instance to retreive
+            schema:
+                type: string
+            examples:
+                username:
+                    value: ftaggart
+                email:
+                    value: ftaggart@idsoftware.com
+    securitySchemes:
+        BasicAuth:
+            type: http
+            scheme: basic

@@ -52,4 +52,13 @@ interface UserAdminInterface
      * @return string
      */
     public function generateResetPasswordToken($user): string;
+
+    /**
+     * Validate a reset password token and return a User entity instance
+     *
+     * @param string $token
+     *
+     * @return User
+     */
+    public function validateResetPasswordToken(string $token): User;
 }

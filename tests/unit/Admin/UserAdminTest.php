@@ -545,4 +545,73 @@ class UserAdminTest extends TestCase
         $result = $this->instance->generateResetPasswordToken($username);
         $this->assertEquals($token, $result);
     }
+
+    public function testValidateResetPasswordTokenSuccess()
+    {
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+
+        /** @var MockObject|Str $psrStreamMock */
+        $psrStreamMock = $this->createMock(StreamInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getBody')
+            ->willReturn($psrStreamMock)
+        ;
+
+        $psrStreamMock->expects($this->once())
+            ->method('__toString')
+            ->willReturn(<<<JSON
+{
+  "user_name": "ftaggart",
+  "email": "ftaggart@idsoftware.com",
+  "created_at": "2019-11-28T09:04:36.578Z",
+  "status": 1,
+  "first_name": "Flynn",
+  "last_name": "Taggart",
+  "register_token": "4b9ea159acb316fe9204e9164db22521",
+  "language": "fr",
+  "user_groups": [
+    {
+      "name": "string"
+    }
+  ]
+}
+JSON
+            );
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/password/reset-token?token=mytoken")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willReturn($psrResponseMock)
+        ;
+
+        $result = $this->instance->validateResetPasswordToken('mytoken');
+
+        $user = new User(json_decode(<<<JSON
+{
+  "user_name": "ftaggart",
+  "email": "ftaggart@idsoftware.com",
+  "created_at": "2019-11-28T09:04:36.578Z",
+  "status": 1,
+  "first_name": "Flynn",
+  "last_name": "Taggart",
+  "register_token": "4b9ea159acb316fe9204e9164db22521",
+  "language": "fr",
+  "user_groups": [
+    {
+      "name": "string"
+    }
+  ]
+}
+JSON
+, true));
+
+        $this->assertEquals($user, $result);
+    }
 }
