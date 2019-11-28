@@ -46,10 +46,10 @@ interface UserAdminInterface
     public function retrieve(string $user);
 
     /**
-     * Generate a reset password token by user email or username
+     * Generate a reset password token by user email or username or user entity
      *
      * @param string $user
      * @return string
      */
-    public function generateResetPasswordToken(string $user): string;
+    public function generateResetPasswordToken($user): string;
 }

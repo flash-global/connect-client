@@ -90,7 +90,7 @@ class UserAdminTest extends TestCase
         $userAdminException = new UserAdminException("Error 1", 500, $requestException);
 
         $request = (new RequestDescriptor())
-            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO)
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . '?validation-email=1')
             ->setMethod("POST")
             ->setRawData(json_encode($user->toArray()))
         ;
@@ -141,7 +141,7 @@ class UserAdminTest extends TestCase
         $validationException = (new ValidatorException("Error 1", 400, $requestException))->setErrors($errors);
 
         $request = (new RequestDescriptor())
-            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO)
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . '?validation-email=1')
             ->setMethod("POST")
             ->setRawData(json_encode($user->toArray()))
         ;
@@ -183,7 +183,7 @@ class UserAdminTest extends TestCase
         ;
 
         $request = (new RequestDescriptor())
-            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO)
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . '?validation-email=1')
             ->setMethod("POST")
             ->setRawData(json_encode($user->toArray()))
         ;
