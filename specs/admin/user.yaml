@@ -162,7 +162,7 @@ paths:
                 - User
             responses:
                 200:
-                    description: A reset password token generated
+                    description: A reset password token has been generated
                     content:
                         application/json:
                             schema:
@@ -198,13 +198,13 @@ paths:
                   type: string
               example: myresetpasswordtoken
         get:
-            summary: Validate a token for reseting password
+            summary: Validate a token for resetting password
             operationId: validateResetPasswordToken
             tags:
                 - User
             responses:
                 200:
-                    description: The User instace linked into reset password token.
+                    description: The User instance linked into reset password token.
                     content:
                         application/json:
                             schema:
