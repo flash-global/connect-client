@@ -25,12 +25,12 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     const OPTION_PASSWORD = 'password';
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $username;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $password;
 
@@ -254,7 +254,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getUsername()
     {
@@ -262,17 +262,17 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     }
 
     /**
-     * @param string $username
+     * @param string|null $username
      * @return UserAdmin
      */
-    public function setUsername(string $username): UserAdmin
+    public function setUsername($username): UserAdmin
     {
         $this->username = $username;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getPassword()
     {
@@ -280,10 +280,10 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     }
 
     /**
-     * @param string $password
+     * @param string|null $password
      * @return UserAdmin
      */
-    public function setPassword(string $password): UserAdmin
+    public function setPassword($password): UserAdmin
     {
         $this->password = $password;
         return $this;
