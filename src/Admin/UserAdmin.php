@@ -25,12 +25,12 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     const OPTION_PASSWORD = 'password';
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $username;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $password;
 
@@ -38,17 +38,21 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * Persist a user entity
      *
      * @param User $user
+     * @param bool $sendValidationEmail
      *
      * @return User
      *
-     * @throws UserAdminException
      * @throws ApiClientException
-     * @throws ValidatorException
+     * @throws UserAdminException
      */
-    public function create(User $user)
+    public function create(User $user, bool $sendValidationEmail = true): User
     {
+        $query = http_build_query([
+            'validation-email' => $sendValidationEmail,
+        ]);
+
         $request = (new RequestDescriptor())
-            ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO))
+            ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO) . '?' . $query)
             ->setMethod("POST")
             ->setRawData(json_encode($user->toArray()))
         ;
@@ -79,7 +83,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @throws ApiClientException
      * @throws UserAdminException
      */
-    public function edit(User $formerUser, User $newUser)
+    public function edit(User $formerUser, User $newUser): User
     {
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO . "/"  . $formerUser->getUserName()))
@@ -101,12 +105,69 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @throws ApiClientException
      * @throws ValidatorException
      */
-    public function retrieve(string $user)
+    public function retrieve(string $user): User
     {
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO . "/" . $user))
             ->setMethod("GET")
         ;
+
+        return $this->sendReturnUser($request);
+    }
+
+    /**
+     * Generate a reset password token by user email or username or user entity
+     *
+     * @param string|User $user
+     * @return string
+     *
+     * @throws UserAdminException
+     * @throws ApiClientException
+     */
+    public function generateResetPasswordToken($user): string
+    {
+        if ($user instanceof User) {
+            $user = $user->getEmail();
+        }
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO . "/" . urlencode($user) . "/password/reset-token"))
+            ->setMethod("GET")
+        ;
+
+        try {
+            $content = $this->send($request);
+            $decodedContent = json_decode($content->getBody(), true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new UserAdminException(json_last_error_msg(), json_last_error());
+            }
+
+            return $decodedContent['token'];
+        } catch (Throwable $exception) {
+            throw $this->parseSendException($exception);
+        }
+    }
+
+    /**
+     * Validate a reset password token and return a User entity instance
+     *
+     * @param string $token
+     *
+     * @return User
+     *
+     * @throws ApiClientException
+     * @throws UserAdminException
+     */
+    public function validateResetPasswordToken(string $token): User
+    {
+        $request = (new RequestDescriptor())
+            ->setUrl(
+                $this->buildUrl(self::API_USERS_PATH_INFO)
+                . '/password/reset-token?'
+                . http_build_query(['token' => $token])
+            )
+            ->setMethod("GET");
 
         return $this->sendReturnUser($request);
     }
@@ -124,6 +185,9 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
         $request->addHeader("Authorization", "Basic " . $credentials);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function send(RequestDescriptor $request, $flags = 0)
     {
         $this->addAuthorization($request);
@@ -138,7 +202,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @throws UserAdminException
      * @throws ValidatorException
      */
-    protected function sendReturnUser(RequestDescriptor $request)
+    protected function sendReturnUser(RequestDescriptor $request): User
     {
         try {
             $content = $this->send($request);
@@ -190,36 +254,36 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getUsername(): string
+    public function getUsername()
     {
         return $this->username;
     }
 
     /**
-     * @param string $username
+     * @param string|null $username
      * @return UserAdmin
      */
-    public function setUsername(string $username): UserAdmin
+    public function setUsername($username): UserAdmin
     {
         $this->username = $username;
         return $this;
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getPassword(): string
+    public function getPassword()
     {
         return $this->password;
     }
 
     /**
-     * @param string $password
+     * @param string|null $password
      * @return UserAdmin
      */
-    public function setPassword(string $password): UserAdmin
+    public function setPassword($password): UserAdmin
     {
         $this->password = $password;
         return $this;

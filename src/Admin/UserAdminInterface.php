@@ -13,10 +13,11 @@ interface UserAdminInterface
      * Persist a user entity
      *
      * @param User $user
+     * @param bool $sendValidationEmail
      *
      * @return User
      */
-    public function create(User $user);
+    public function create(User $user, bool $sendValidationEmail = true): User;
 
     /**
      * Delete a user entity by entity, its username or email
@@ -33,7 +34,7 @@ interface UserAdminInterface
      *
      * @return User
      */
-    public function edit(User $formerUser, User $newNewUser);
+    public function edit(User $formerUser, User $newNewUser): User;
 
     /**
      * Retrieve a user entity by its username or email
@@ -42,5 +43,22 @@ interface UserAdminInterface
      *
      * @return User
      */
-    public function retrieve(string $user);
+    public function retrieve(string $user): User;
+
+    /**
+     * Generate a reset password token by user email or username or user entity
+     *
+     * @param string|User $user
+     * @return string
+     */
+    public function generateResetPasswordToken($user): string;
+
+    /**
+     * Validate a reset password token and return a User entity instance
+     *
+     * @param string $token
+     *
+     * @return User
+     */
+    public function validateResetPasswordToken(string $token): User;
 }

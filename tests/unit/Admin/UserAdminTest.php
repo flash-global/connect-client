@@ -3,6 +3,7 @@
 namespace Test\Fei\Service\Connect\Client\Admin;
 
 use DateTime;
+use Exception;
 use Fei\ApiClient\ApiClientException;
 use Fei\ApiClient\RequestDescriptor;
 use Fei\Service\Connect\Client\Admin\UserAdmin;
@@ -16,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
+use ReflectionMethod;
 
 /**
  * Class UserTest
@@ -66,6 +68,15 @@ class UserAdminTest extends TestCase
     }
 
     /**
+     * @throws Exception
+     */
+    public function testDeleteNotImplemented()
+    {
+        $this->expectExceptionObject(new Exception('Not implemented'));
+        $this->instance->delete('');
+    }
+
+    /**
      * @throws ApiClientException
      * @throws UserAdminException
      * @throws ValidatorException
@@ -89,7 +100,7 @@ class UserAdminTest extends TestCase
         $userAdminException = new UserAdminException("Error 1", 500, $requestException);
 
         $request = (new RequestDescriptor())
-            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO)
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . '?validation-email=1')
             ->setMethod("POST")
             ->setRawData(json_encode($user->toArray()))
         ;
@@ -140,7 +151,7 @@ class UserAdminTest extends TestCase
         $validationException = (new ValidatorException("Error 1", 400, $requestException))->setErrors($errors);
 
         $request = (new RequestDescriptor())
-            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO)
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . '?validation-email=1')
             ->setMethod("POST")
             ->setRawData(json_encode($user->toArray()))
         ;
@@ -159,12 +170,11 @@ class UserAdminTest extends TestCase
      * @throws ApiClientException
      * @throws UserAdminException
      * @throws ValidatorException
+     * @throws Exception
      */
-    public function testCreateSuccess()
+    public function testCreateJsonError()
     {
         $user = new User();
-        $userData = $user->toArray();
-        unset($userData['profile_associations']);
 
         /** @var MockObject|ResponseInterface $psrResponseMock */
         $psrResponseMock = $this->createMock(ResponseInterface::class);
@@ -178,11 +188,11 @@ class UserAdminTest extends TestCase
 
         $psrStreamMock->expects($this->once())
                       ->method('__toString')
-                      ->willReturn(json_encode($userData))
+                      ->willReturn('{"user":"plop"')
         ;
 
         $request = (new RequestDescriptor())
-            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO)
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . '?validation-email=1')
             ->setMethod("POST")
             ->setRawData(json_encode($user->toArray()))
         ;
@@ -191,6 +201,48 @@ class UserAdminTest extends TestCase
                        ->method('send')
                        ->with($request)
                        ->willReturn($psrResponseMock)
+        ;
+
+        $this->expectExceptionObject(new Exception('Syntax error', JSON_ERROR_SYNTAX));
+        $this->instance->create($user);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws UserAdminException
+     * @throws ValidatorException
+     * @throws Exception
+     */
+    public function testCreateSuccess()
+    {
+        $user = new User();
+        $userData = $user->toArray();
+
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+        /** @var MockObject|Str $psrStreamMock */
+        $psrStreamMock = $this->createMock(StreamInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getBody')
+            ->willReturn($psrStreamMock)
+        ;
+
+        $psrStreamMock->expects($this->once())
+            ->method('__toString')
+            ->willReturn(json_encode($userData))
+        ;
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . '?validation-email=1')
+            ->setMethod("POST")
+            ->setRawData(json_encode($user->toArray()))
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willReturn($psrResponseMock)
         ;
 
         $result = $this->instance->create($user);
@@ -299,13 +351,13 @@ class UserAdminTest extends TestCase
      * @throws ApiClientException
      * @throws UserAdminException
      * @throws ValidatorException
+     * @throws Exception
      */
     public function testEditSuccess()
     {
         $username = "user1";
         $user = (new User())->setUserName($username);
         $userData = $user->toArray();
-        unset($userData['profile_associations']);
 
         /** @var MockObject|ResponseInterface $psrResponseMock */
         $psrResponseMock = $this->createMock(ResponseInterface::class);
@@ -385,13 +437,13 @@ class UserAdminTest extends TestCase
      * @throws ApiClientException
      * @throws UserAdminException
      * @throws ValidatorException
+     * @throws Exception
      */
     public function testRetrieveSuccess()
     {
         $username = "user1";
         $user = new User();
         $userData = $user->toArray();
-        unset($userData['profile_associations']);
 
         /** @var MockObject|ResponseInterface $psrResponseMock */
         $psrResponseMock = $this->createMock(ResponseInterface::class);
@@ -427,5 +479,260 @@ class UserAdminTest extends TestCase
         $result->setCreatedAt($dateTime);
 
         $this->assertEquals($user, $result);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws UserAdminException
+     * @throws ValidatorException
+     */
+    public function testGenerateResetPasswordTokenError500()
+    {
+        $user = 'user1';
+
+        /** @var MockObject|RequestInterface $psrRequestMock */
+        $psrRequestMock = $this->createMock(RequestInterface::class);
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getStatusCode')
+            ->willReturn(500);
+
+        $requestException = new RequestException("Error 1", $psrRequestMock, $psrResponseMock);
+        $apiClientException = new ApiClientException("Error  2", 0, $requestException);
+        $userAdminException = new UserAdminException("Error 1", 500, $requestException);
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/$user/password/reset-token")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willThrowException($apiClientException)
+        ;
+
+        $this->expectExceptionObject($userAdminException);
+        $this->instance->generateResetPasswordToken($user);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws UserAdminException
+     * @throws ValidatorException
+     */
+    public function testGenerateResetPasswordTokenError404()
+    {
+        $user = 'user1';
+
+        /** @var MockObject|RequestInterface $psrRequestMock */
+        $psrRequestMock = $this->createMock(RequestInterface::class);
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getStatusCode')
+            ->willReturn(404);
+
+        $requestException = new RequestException("Error 1", $psrRequestMock, $psrResponseMock);
+        $apiClientException = new ApiClientException("Error  2", 0, $requestException);
+        $userAdminException = new UserAdminException("Error 1", 404, $requestException);
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/$user/password/reset-token")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willThrowException($apiClientException)
+        ;
+
+        $this->expectExceptionObject($userAdminException);
+        $this->instance->generateResetPasswordToken($user);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws UserAdminException
+     * @throws ValidatorException
+     * @throws Exception
+     */
+    public function testGenerateResetPasswordTokenSuccess()
+    {
+        $username = "user1";
+        $token = "1234";
+        $tokenData = ['token' => $token];
+
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+        /** @var MockObject|Str $psrStreamMock */
+        $psrStreamMock = $this->createMock(StreamInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getBody')
+            ->willReturn($psrStreamMock)
+        ;
+
+        $psrStreamMock->expects($this->once())
+            ->method('__toString')
+            ->willReturn(json_encode($tokenData))
+        ;
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/$username/password/reset-token")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willReturn($psrResponseMock)
+        ;
+
+        $result = $this->instance->generateResetPasswordToken($username);
+        $this->assertEquals($token, $result);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws UserAdminException
+     * @throws ValidatorException
+     * @throws Exception
+     */
+    public function testGenerateResetPasswordTokenSuccessWithUserInstance()
+    {
+        $email = "user1@b.c";
+        $token = "1234";
+        $tokenData = ['token' => $token];
+        $user = (new User())->setEmail($email);
+
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+        /** @var MockObject|Str $psrStreamMock */
+        $psrStreamMock = $this->createMock(StreamInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getBody')
+            ->willReturn($psrStreamMock)
+        ;
+
+        $psrStreamMock->expects($this->once())
+            ->method('__toString')
+            ->willReturn(json_encode($tokenData))
+        ;
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/" . urlencode($email) . "/password/reset-token")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willReturn($psrResponseMock)
+        ;
+
+        $result = $this->instance->generateResetPasswordToken($user);
+        $this->assertEquals($token, $result);
+    }
+
+    /**
+     * @throws ApiClientException
+     * @throws Exception
+     */
+    public function testValidateResetPasswordTokenSuccess()
+    {
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+
+        /** @var MockObject|Str $psrStreamMock */
+        $psrStreamMock = $this->createMock(StreamInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getBody')
+            ->willReturn($psrStreamMock)
+        ;
+
+        $psrStreamMock->expects($this->once())
+            ->method('__toString')
+            ->willReturn(<<<JSON
+{
+  "user_name": "ftaggart",
+  "email": "ftaggart@idsoftware.com",
+  "created_at": "2019-11-28T09:04:36.578Z",
+  "status": 1,
+  "first_name": "Flynn",
+  "last_name": "Taggart",
+  "register_token": "4b9ea159acb316fe9204e9164db22521",
+  "language": "fr",
+  "user_groups": [
+    {
+      "name": "string"
+    }
+  ]
+}
+JSON
+            );
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USERS_PATH_INFO . "/password/reset-token?token=mytoken")
+            ->setMethod("GET")
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willReturn($psrResponseMock)
+        ;
+
+        $result = $this->instance->validateResetPasswordToken('mytoken');
+
+        $user = new User(json_decode(<<<JSON
+{
+  "user_name": "ftaggart",
+  "email": "ftaggart@idsoftware.com",
+  "created_at": "2019-11-28T09:04:36.578Z",
+  "status": 1,
+  "first_name": "Flynn",
+  "last_name": "Taggart",
+  "register_token": "4b9ea159acb316fe9204e9164db22521",
+  "language": "fr",
+  "user_groups": [
+    {
+      "name": "string"
+    }
+  ]
+}
+JSON
+            , true));
+
+        $this->assertEquals($user, $result);
+    }
+
+    public function testAddAuthorization()
+    {
+        $requestDescriptor = new RequestDescriptor();
+
+        $reflection = new ReflectionMethod(UserAdmin::class, 'addAuthorization');
+        $reflection->setAccessible(true);
+        $reflection->invoke($this->instance, $requestDescriptor);
+
+        $this->assertEquals('Basic ' . base64_encode($this->username . ":" . $this->password), $requestDescriptor->getHeader('Authorization'));
+    }
+
+    public function testAddAuthorizationEmpty()
+    {
+        $requestDescriptor = new RequestDescriptor();
+        $this->instance->setUsername('');
+
+        $reflection = new ReflectionMethod(UserAdmin::class, 'addAuthorization');
+        $reflection->setAccessible(true);
+        $reflection->invoke($this->instance, $requestDescriptor);
+
+        $this->assertArrayNotHasKey('Authorization', $requestDescriptor->getHeaders());
     }
 }
