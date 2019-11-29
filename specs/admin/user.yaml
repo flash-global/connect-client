@@ -23,7 +23,7 @@ paths:
                   description: >
                       Define if a validation registration email must be sent:
                         * `0`: Email is not sent
-                        * `1`: Email is send
+                        * `1`: Email is sent
             summary: Create a User entity instance
             tags:
                 - User
