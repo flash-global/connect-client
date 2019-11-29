@@ -21,7 +21,7 @@ paths:
                       default: 1
                   required: false
                   description: >
-                      Define if a validation registration email must be send:
+                      Define if a validation registration email must be sent:
                         * `0`: Email is not send
                         * `1`: Email is send
             summary: Create a User entity instance
