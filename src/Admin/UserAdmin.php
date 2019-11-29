@@ -45,7 +45,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @throws ApiClientException
      * @throws UserAdminException
      */
-    public function create(User $user, bool $sendValidationEmail = true)
+    public function create(User $user, bool $sendValidationEmail = true): User
     {
         $query = http_build_query([
             'validation-email' => $sendValidationEmail,
@@ -83,7 +83,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @throws ApiClientException
      * @throws UserAdminException
      */
-    public function edit(User $formerUser, User $newUser)
+    public function edit(User $formerUser, User $newUser): User
     {
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO . "/"  . $formerUser->getUserName()))
@@ -105,7 +105,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @throws ApiClientException
      * @throws ValidatorException
      */
-    public function retrieve(string $user)
+    public function retrieve(string $user): User
     {
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO . "/" . $user))
@@ -155,6 +155,9 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @param string $token
      *
      * @return User
+     *
+     * @throws ApiClientException
+     * @throws UserAdminException
      */
     public function validateResetPasswordToken(string $token): User
     {
@@ -199,7 +202,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      * @throws UserAdminException
      * @throws ValidatorException
      */
-    protected function sendReturnUser(RequestDescriptor $request)
+    protected function sendReturnUser(RequestDescriptor $request): User
     {
         try {
             $content = $this->send($request);
