@@ -65,11 +65,22 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
      *
      * @param User|string $user
      *
+     * @return User
+     *
      * @throws Exception
      */
-    public function delete($user)
+    public function delete($user): User
     {
-        throw new Exception('Not implemented');
+        if ($user instanceof User) {
+            $user = $user->getEmail();
+        }
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO . "/" . $user))
+            ->setMethod("DELETE")
+        ;
+
+        return $this->sendReturnUser($request);
     }
 
     /**
