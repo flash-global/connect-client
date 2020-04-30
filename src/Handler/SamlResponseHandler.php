@@ -32,9 +32,7 @@ class SamlResponseHandler
 
         $connect->getSaml()->validateResponse(
             $response,
-            isset($_SESSION[Connect::class][$connect->getConfig()->getEntityID()]['SAML_RelayState'])
-                ? $_SESSION['SAML_RelayState']
-                : null
+            $_SESSION[Connect::class][$connect->getConfig()->getEntityID()]['SAML_RelayState'] ?? null
         );
 
         $assertion = $response->getFirstAssertion();
