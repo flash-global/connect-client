@@ -85,7 +85,7 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
     }
 
     /**
-     * Delete a user entity by entity, its username or email
+     * Delete a user entity by email
      *
      * @param User|string $user
      *
