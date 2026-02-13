@@ -21,6 +21,7 @@ use Throwable;
 class UserAdmin extends AbstractApiClient implements UserAdminInterface
 {
     const API_USERS_PATH_INFO = '/api/v3/users';
+    const API_USER_PATH_INFO = '/api/user';
     const OPTION_USERNAME = 'username';
     const OPTION_PASSWORD = 'password';
 
@@ -77,6 +78,26 @@ class UserAdmin extends AbstractApiClient implements UserAdminInterface
 
         $request = (new RequestDescriptor())
             ->setUrl($this->buildUrl(self::API_USERS_PATH_INFO . "/" . $user))
+            ->setMethod("DELETE")
+        ;
+
+        return $this->sendReturnUser($request);
+    }
+
+    /**
+     * Delete a user entity by entity, its username or email
+     *
+     * @param User|string $user
+     *
+     * @return User
+     *
+     * @throws Exception
+     */
+    public function deleteUserByEmail($userEmail): User
+    {
+        $request = (new RequestDescriptor())
+            ->setUrl($this->buildUrl(self::API_USER_PATH_INFO))
+            ->addParam('filter', ['email' => $userEmail])
             ->setMethod("DELETE")
         ;
 

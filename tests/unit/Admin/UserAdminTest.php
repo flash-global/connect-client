@@ -113,6 +113,51 @@ class UserAdminTest extends TestCase
     }
 
     /**
+     * @throws Exception
+     */
+    public function testDeleteUserByEmail()
+    {
+        $email = "user1@toto.fr";
+        $user = new User();
+        $userData = $user->toArray();
+        /** @var MockObject|ResponseInterface $psrResponseMock */
+        $psrResponseMock = $this->createMock(ResponseInterface::class);
+        /** @var MockObject|Str $psrStreamMock */
+        $psrStreamMock = $this->createMock(StreamInterface::class);
+
+        $psrResponseMock->expects($this->once())
+            ->method('getBody')
+            ->willReturn($psrStreamMock)
+        ;
+
+        $psrStreamMock->expects($this->once())
+            ->method('__toString')
+            ->willReturn(json_encode($userData))
+        ;
+
+        $request = (new RequestDescriptor())
+            ->setUrl($this->baseUrl . UserAdmin::API_USER_PATH_INFO )
+            ->setMethod("DELETE")
+            ->addParam('filter', ['email' => $email])
+        ;
+
+        $this->instance->expects($this->once())
+            ->method('send')
+            ->with($request)
+            ->willReturn($psrResponseMock)
+        ;
+
+        $result = $this->instance->deleteUserByEmail($email);
+        $this->assertInstanceOf(User::class, $result);
+
+        $dateTime = new DateTime();
+        $user->setCreatedAt($dateTime);
+        $result->setCreatedAt($dateTime);
+
+        $this->assertEquals($user, $result);
+    }
+
+    /**
      * @throws ApiClientException
      * @throws UserAdminException
      * @throws ValidatorException
